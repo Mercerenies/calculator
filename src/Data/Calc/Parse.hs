@@ -1,8 +1,9 @@
 
-module Data.Calc.Parse where
+module Data.Calc.Parse(assocToOpAssoc, operatorTable, parseExpr) where
 
 import Data.Calc.Expr
 import Data.Calc.Operator
+import Data.Calc.Util
 
 import Text.Parsec
 import qualified Text.Parsec.Expr as Expr
@@ -45,15 +46,26 @@ assocToOpAssoc NoAssoc = Expr.AssocNone
 assocToOpAssoc LeftAssoc = Expr.AssocLeft
 assocToOpAssoc RightAssoc = Expr.AssocRight
 
---operatorTable :: Expr.OperatorTable String () Identity (Expr Prim)
---operatorTable = Map.toList stdOps &
---                List.sortBy (compare `on` (Down . opPrec)) &
---                List.groupBy ((==) `on` opPrec) &
---                map (map opToOperator)
---    where opPrec (_, Op _ prec _ _) = prec
---          parseOp 
---          opToOperator :: (String, Op) -> Expr.Operator String () Identity (Expr Prim)
---          opToOperator (s, Op name _ assoc Infix) = Expr.Infix (parseOp name) (assocToOpAssoc assoc)
+operatorTable :: Expr.OperatorTable String () Identity (Expr Prim)
+operatorTable = Map.toList stdOps &
+                List.sortBy (compare `on` (Down . opPrec)) &
+                List.groupBy ((==) `on` opPrec) &
+                map (map opToOperator)
+    where opPrec (_, Op _ prec _ _) = prec
+          parseBinOp :: String -> String -> Parser (Expr b -> Expr b -> Expr b)
+          parseBinOp s name = (\x y -> Compound s [x, y]) <$ try (spaces *> string name <* spaces)
+          parseUnOp :: String -> String -> Parser (Expr b -> Expr b)
+          parseUnOp s name = (\x -> Compound s [x]) <$ try (spaces *> string name <* spaces)
+          opToOperator :: (String, Op) -> Expr.Operator String () Identity (Expr Prim)
+          opToOperator (s, Op name _ assoc Infix) =
+              Expr.Infix (parseBinOp s (stripString name)) (assocToOpAssoc assoc)
+          opToOperator (s, Op name _ _ Postfix) =
+              Expr.Postfix (parseUnOp s (stripString name))
+          opToOperator (s, Op name _ _ Prefix) =
+              Expr.Prefix (parseUnOp s (stripString name))
 
 expr :: Parser (Expr Prim)
-expr = atom -- TODO
+expr = Expr.buildExpressionParser operatorTable atom
+
+parseExpr :: SourceName -> String -> Either ParseError (Expr Prim)
+parseExpr = parse (expr <* eof)

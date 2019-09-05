@@ -1,10 +1,12 @@
 
-module Data.Calc.Util(untilFixed, maybeToMonoid, mappendMap, mapAccum, accumSomeValues) where
+module Data.Calc.Util(untilFixed, maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
+                      stripString) where
 
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Data.List(mapAccumL)
 import Data.Monoid
+import qualified Data.Text as T
 import Control.Arrow
 import Control.Monad
 
@@ -29,3 +31,6 @@ accumSomeValues f = second join . mapAccum go
     where go a = case f a of
                    Nothing -> (mempty, pure a)
                    Just x -> (x, mzero)
+
+stripString :: String -> String
+stripString = T.unpack . T.strip . T.pack

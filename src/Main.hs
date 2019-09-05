@@ -12,8 +12,9 @@ import Data.Calc.Expr
 import Data.Calc.Print
 import Data.Calc.Pass
 import Data.Calc.Normalize
-import Data.Calc.Parse()
+import Data.Calc.Parse
 
+import Control.Monad
 import Prelude hiding ((.), id)
 
 -- (+ 3 (- 2 1) 4 (* 2 z) z (* z 3) (* x y (^ x 2)) (_ (* 2 9)))
@@ -43,9 +44,21 @@ example3 = Compound "+" [Compound "+" [Constant (PrimVar "A"), Constant (PrimVar
 example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
+myPass :: Pass Prim Prim
+myPass = sortTermsOfStd . flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . normalizeNegatives
+
 main :: IO ()
-main = do
-  let pass = sortTermsOfStd . flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . normalizeNegatives
-  putStrLn "Hello :)"
-  putStrLn $ formulaShow (runPassTD pass $ example)
-  putStrLn $ lispLikeShow (runPassTD pass $ example)
+main = forever $ do
+         line <- getLine
+         case parseExpr "(stdin)" line of
+           Left err -> print err
+           Right expr -> do
+                   let expr' = runPassTD myPass expr
+                   putStrLn $ lispLikeShow expr
+                   putStrLn $ formulaShow expr
+                   putStrLn $ formulaShow expr'
+
+--  let pass = myPass
+--  putStrLn "Hello :)"
+--  putStrLn $ formulaShow (runPassTD pass $ example)
+--  putStrLn $ lispLikeShow (runPassTD pass $ example)
