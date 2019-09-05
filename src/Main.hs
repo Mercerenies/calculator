@@ -12,6 +12,7 @@ import Data.Calc.Expr
 import Data.Calc.Print
 import Data.Calc.Pass
 import Data.Calc.Normalize
+import Data.Calc.Parse()
 
 import Prelude hiding ((.), id)
 
