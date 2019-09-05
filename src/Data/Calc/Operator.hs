@@ -15,10 +15,11 @@ data Fixity = Infix | Prefix | Postfix
 
 stdOps :: Map String Op
 stdOps = Map.fromList [
-          ("+", Op "+" 6 LeftAssoc Infix),
-          ("-", Op "-" 6 LeftAssoc Infix),
-          ("*", Op "*" 7 LeftAssoc Infix),
-          ("/", Op "/" 7 LeftAssoc Infix),
+          ("+", Op " + " 6 LeftAssoc Infix),
+          ("-", Op " - " 6 LeftAssoc Infix),
+          ("*", Op " * " 7 LeftAssoc Infix),
+          ("/", Op " / " 7 LeftAssoc Infix),
+          ("^", Op "^" 8 RightAssoc Infix),
           ("_", Op "-" 6 LeftAssoc Prefix)
          ]
 

@@ -25,7 +25,7 @@ formulaShowsPrec n (Compound h ts) =
           showsArglist xs =
               foldr (.) id . intersperse (", " ++) . map (formulaShowsPrec 0) $ xs
           internal Infix name args prec =
-              foldr (.) id . intersperse ((" " ++ name ++ " ") ++) .
+              foldr (.) id . intersperse (name ++) .
                     map (formulaShowsPrec prec) $ args
           internal Prefix name [a] prec =
               (name ++) . formulaShowsPrec prec a

@@ -65,6 +65,7 @@ collectLikeFactors = Pass collect
           match (Compound "^" [Constant a, Constant b])
               | isVar a && isNumber b = [] <$ modify (mappendMap a [Constant b])
           match x = pure [x]
+          coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
           coalesce (a, [x]) = Compound "^" [Constant a, x]
           coalesce (a, es) = Compound "^" [Constant a, Compound "+" es]
 
@@ -80,6 +81,7 @@ collectLikeTerms = Pass collect
           match (Compound "*" [Constant a, Constant b])
               | isVar b && isNumber a = [] <$ modify (mappendMap b [Constant a])
           match x = pure [x]
+          coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
           coalesce (a, [x]) = Compound "*" [x, Constant a]
           coalesce (a, es) = Compound "*" [Compound "+" es, Constant a]
 
@@ -88,11 +90,13 @@ foldConstants :: Pass Prim Prim
 foldConstants = Pass eval
     where eval (Compound "+" xs) =
               case accumSomeValues (fmap Sum . coerceToNum) xs of
+                (Sum 0, [x]) -> x
                 (Sum 0, xs') -> Compound "+" xs'
                 (Sum n, xs') -> Compound "+" (Constant (PrimInt n) : xs')
           eval (Compound "*" xs) =
               case accumSomeValues (fmap Product . coerceToNum) xs of
-                (Product 0,   _) -> Compound "*" [Constant (PrimInt 0)]
+                (Product 0,   _) -> Constant (PrimInt 0)
+                (Product 1, [x]) -> x
                 (Product 1, xs') -> Compound "*" xs'
                 (Product n, xs') -> Compound "*" (Constant (PrimInt n) : xs')
           eval (Compound "/" [a, b])

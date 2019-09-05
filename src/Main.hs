@@ -44,12 +44,7 @@ example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constan
 
 main :: IO ()
 main = do
-  let pass = sortTermsOfStd . flattenStdSingletons . foldConstants . flattenStdSingletons . collectLikeTerms . collectLikeFactors . levelStdOperators . normalizeNegatives
-  let pass1 = flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . normalizeNegatives
+  let pass = sortTermsOfStd . flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . normalizeNegatives
   putStrLn "Hello :)"
-  putStrLn $ lispLikeShow example4
-  putStrLn $ lispLikeShow (runPassOnceTD pass1 $ example4)
---  putStrLn $ formulaShow (runPassTD pass1 $ example2)
---  putStrLn $ formulaShow (runPassTD pass $ example3)
   putStrLn $ formulaShow (runPassTD pass $ example)
   putStrLn $ lispLikeShow (runPassTD pass $ example)
