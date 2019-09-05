@@ -13,6 +13,7 @@ import Data.Calc.Print
 import Data.Calc.Pass
 import Data.Calc.Normalize
 import Data.Calc.Parse
+import Data.Calc.Number()
 
 import Control.Monad
 import Prelude hiding ((.), id)
