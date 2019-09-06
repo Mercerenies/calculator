@@ -46,7 +46,7 @@ example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
 myPass :: Pass Prim Prim
-myPass = sortTermsOfStd . flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+myPass = sortTermsOfStd . flattenStdSingletons . evalFunctions . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
 main = forever $ do

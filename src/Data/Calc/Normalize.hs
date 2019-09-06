@@ -6,6 +6,7 @@ import Data.Calc.Expr
 import Data.Calc.Pass
 import Data.Calc.Repr
 import Data.Calc.Util
+import Data.Calc.Function
 
 import Prelude hiding ((.), id)
 import Data.List(sort)
@@ -118,8 +119,9 @@ foldConstants = Pass eval
 
 -- TODO Generalize this to be typeclassed like above.
 evalFunctions :: Pass Prim Prim
-evalFunctions = id -- Pass eval -- ////
---    where eval (Compound h xs) = 
+evalFunctions = Pass eval
+    where eval (Compound h xs) = applyToStd h xs
+          eval x = x
 
 flattenSingletons :: [String] -> Pass a a
 flattenSingletons ss = foldr (.) id $ map (Pass . go) ss
