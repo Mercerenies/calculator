@@ -16,7 +16,7 @@ import qualified Data.Map as Map
 import Data.Monoid
 import Control.Monad.State
 
-normalizeNegatives :: ReprInteger a => Pass a a
+normalizeNegatives :: Monad m => ReprInteger a => PassT m a a
 normalizeNegatives = pass subtractionPass . pass negationPass
     where subtractionPass (Compound "-" [a, b]) =
               Compound "+" [a, Compound "*" [reprInteger (-1), b]]
@@ -25,7 +25,7 @@ normalizeNegatives = pass subtractionPass . pass negationPass
               Compound "*" [reprInteger (-1), b]
           negationPass x = x
 
-levelOperators :: [String] -> Pass a a
+levelOperators :: Monad m => [String] -> PassT m a a
 levelOperators ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' xs)
              | str == str' = Compound str' $ concatMap (flatten str) xs
@@ -34,10 +34,10 @@ levelOperators ss = foldr (.) id $ map (pass . go) ss
               | str == str' = xs
           flatten _ x = [x]
 
-levelStdOperators :: Pass a a
+levelStdOperators :: Monad m => PassT m a a
 levelStdOperators = levelOperators ["+", "*"]
 
-simplifyRationals :: Pass a a
+simplifyRationals :: Monad m => PassT m a a
 simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
     where rule1 (Compound "/" [Compound "/" [a, b], c]) = Compound "/" [a, Compound "*" [b, c]]
           rule1 x = x
@@ -56,7 +56,8 @@ simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
           extractDenom (Compound "/" [_, b]) = Just b
           extractDenom _ = Nothing
 
-collectLikeFactors :: forall a. (ReprInteger a, HasVars a, HasNumbers a, Ord a) => Pass a a
+collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
+                      PassT m a a
 collectLikeFactors = pass collect
     where collect (Compound "*" xs) = let (res, m) = runState (concat <$> mapM match xs) Map.empty
                                       in Compound "*" (res ++ (map coalesce $ Map.toList m))
@@ -70,7 +71,8 @@ collectLikeFactors = pass collect
           coalesce (a, [x]) = Compound "^" [Constant a, x]
           coalesce (a, es) = Compound "^" [Constant a, Compound "+" es]
 
-collectLikeTerms :: forall a. (ReprInteger a, HasVars a, HasNumbers a, Ord a) => Pass a a
+collectLikeTerms :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
+                    PassT m a a
 collectLikeTerms = pass collect
     where collect (Compound "+" xs) = let (res, m) = runState (concat <$> mapM match xs) Map.empty
                                       in Compound "+" (res ++ (map coalesce $ Map.toList m))
@@ -87,7 +89,7 @@ collectLikeTerms = pass collect
           coalesce (a, es) = Compound "*" [Compound "+" es, Constant a]
 
 -- TODO I'd like to generalize this to take Pass a a for appropriately typeclassed a.
-foldConstants :: Pass Prim Prim
+foldConstants :: Monad m => PassT m Prim Prim
 foldConstants = pass eval
     where eval (Compound "+" xs) =
               case accumSomeValues (fmap Sum . coerceToNum) xs of
@@ -118,23 +120,23 @@ foldConstants = pass eval
           coerceToNum _ = Nothing
 
 -- TODO Generalize this to be typeclassed like above.
-evalFunctions :: Pass Prim Prim
+evalFunctions :: Monad m => PassT m Prim Prim
 evalFunctions = pass eval
     where eval (Compound h xs) = applyToStd h xs
           eval x = x
 
-flattenSingletons :: [String] -> Pass a a
+flattenSingletons :: Monad m => [String] -> PassT m a a
 flattenSingletons ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' [a]) | str == str' = a
           go _ x = x
 
-flattenStdSingletons :: Pass a a
+flattenStdSingletons :: Monad m => PassT m a a
 flattenStdSingletons = flattenSingletons ["+", "*"]
 
-sortTermsOf :: Ord a => [String] -> Pass a a
+sortTermsOf :: (Ord a, Monad m) => [String] -> PassT m a a
 sortTermsOf ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' xs) | str == str' = Compound str' (sort xs)
           go _ x = x
 
-sortTermsOfStd :: Ord a => Pass a a
+sortTermsOfStd :: (Ord a, Monad m) => PassT m a a
 sortTermsOfStd = sortTermsOf ["+", "*"]

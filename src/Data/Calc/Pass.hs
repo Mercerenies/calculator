@@ -27,8 +27,8 @@ instance Monad m => Category (PassT m) where
 instance Functor m => Profunctor (PassT m) where
     dimap f g (PassT h) = PassT (fmap (fmap g) . h . fmap f)
 
-pass :: (Expr a -> Expr b) -> Pass a b
-pass f = PassT (Identity . f)
+pass :: Applicative m => (Expr a -> Expr b) -> PassT m a b
+pass f = PassT (pure . f)
 
 runPassOnceTDM :: Monad m => PassT m a a -> Expr a -> m (Expr a)
 runPassOnceTDM (PassT f) e =
