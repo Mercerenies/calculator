@@ -15,6 +15,7 @@ import Data.Calc.Normalize
 import Data.Calc.Parse
 
 import Control.Monad
+import System.IO
 import Prelude hiding ((.), id)
 
 -- (+ 3 (- 2 1) 4 (* 2 z) z (* z 3) (* x y (^ x 2)) (_ (* 2 9)))
@@ -45,10 +46,12 @@ example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
 myPass :: Pass Prim Prim
-myPass = sortTermsOfStd . flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . normalizeNegatives
+myPass = sortTermsOfStd . flattenStdSingletons . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
 main = forever $ do
+         putStr "> "
+         hFlush stdout
          line <- getLine
          case parseExpr "(stdin)" line of
            Left err -> print err
