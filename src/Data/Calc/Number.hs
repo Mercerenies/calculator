@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Data.Calc.Number where
+module Data.Calc.Number(Number(..), RealNum(..), toDouble, Complex(..)) where
 
 import Data.Ratio
 import Data.Complex
@@ -11,6 +11,11 @@ newtype Number = Number (Complex RealNum)
 
 data RealNum = NRatio Rational
              | NDouble Double
+
+instance Show Number where
+    showsPrec n (Number (a :+ b))
+        | b == 0 = showsPrec n a
+        | otherwise = undefined -- /////
 
 instance Show RealNum where
     showsPrec _ (NRatio r) =
