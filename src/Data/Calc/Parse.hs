@@ -28,6 +28,7 @@ arglist = sepBy expr (try $ spaces *> char ',' *> spaces)
 
 fnCall :: Parser (Expr Prim)
 fnCall = do
+  -- Note no space between the name and the paren!
   name <- try (var <* char '(')
   spaces
   args <- arglist
@@ -37,7 +38,7 @@ fnCall = do
 
 atom :: Parser (Expr Prim)
 atom = (char '(' *> expr <* char ')') <|>
-       (Constant . PrimInt <$> nat <?> "natural number") <|>
+       (Constant . PrimNum . fromInteger <$> nat <?> "natural number") <|>
        (fnCall <?> "function") <|>
        (Constant . PrimVar <$> var <?> "variable")
 

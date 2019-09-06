@@ -13,28 +13,28 @@ import Data.Calc.Print
 import Data.Calc.Pass
 import Data.Calc.Normalize
 import Data.Calc.Parse
-import Data.Calc.Number()
+import Data.Calc.Number
 
 import Control.Monad
 import Prelude hiding ((.), id)
 
 -- (+ 3 (- 2 1) 4 (* 2 z) z (* z 3) (* x y (^ x 2)) (_ (* 2 9)))
 example :: Expr Prim
-example = Compound "+" [Constant (PrimInt 3),
-                        Compound "-" [Constant (PrimInt 2), Constant (PrimInt 1)],
-                        Constant (PrimInt 4),
-                        Compound "*" [Constant (PrimInt 2), Constant (PrimVar "z")],
+example = Compound "+" [Constant (PrimNum 3),
+                        Compound "-" [Constant (PrimNum 2), Constant (PrimNum 1)],
+                        Constant (PrimNum 4),
+                        Compound "*" [Constant (PrimNum 2), Constant (PrimVar "z")],
                         Constant (PrimVar "z"),
-                        Compound "*" [Constant (PrimVar "z"), Constant (PrimInt 3)],
+                        Compound "*" [Constant (PrimVar "z"), Constant (PrimNum 3)],
                         Compound "*" [
                          Constant (PrimVar "x"),
                          Constant (PrimVar "y"),
-                         Compound "^" [Constant (PrimVar "x"), Constant (PrimInt 2)]
+                         Compound "^" [Constant (PrimVar "x"), Constant (PrimNum 2)]
                         ],
-                        Compound "_" [Compound "*" [Constant (PrimInt 2), Constant (PrimInt 9)]]]
+                        Compound "_" [Compound "*" [Constant (PrimNum 2), Constant (PrimNum 9)]]]
 
 example1 :: Expr Prim
-example1 = Compound "^" [Constant (PrimVar "A"), Constant (PrimInt 1)]
+example1 = Compound "^" [Constant (PrimVar "A"), Constant (PrimNum 1)]
 
 example2 :: Expr Prim
 example2 = Compound "+" [Constant (PrimVar "A"), Compound "+" [Constant (PrimVar "B"), Constant (PrimVar "C")]]

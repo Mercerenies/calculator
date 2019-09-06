@@ -92,28 +92,28 @@ foldConstants = Pass eval
               case accumSomeValues (fmap Sum . coerceToNum) xs of
                 (Sum 0, [x]) -> x
                 (Sum 0, xs') -> Compound "+" xs'
-                (Sum n, xs') -> Compound "+" (Constant (PrimInt n) : xs')
+                (Sum n, xs') -> Compound "+" (Constant (PrimNum n) : xs')
           eval (Compound "*" xs) =
               case accumSomeValues (fmap Product . coerceToNum) xs of
-                (Product 0,   _) -> Constant (PrimInt 0)
+                (Product 0,   _) -> Constant (PrimNum 0)
                 (Product 1, [x]) -> x
                 (Product 1, xs') -> Compound "*" xs'
-                (Product n, xs') -> Compound "*" (Constant (PrimInt n) : xs')
+                (Product n, xs') -> Compound "*" (Constant (PrimNum n) : xs')
           eval (Compound "/" [a, b])
               | Just 1 <- coerceToNum b = a
-              | Just 0 <- coerceToNum a = Constant (PrimInt 0)
+              | Just 0 <- coerceToNum a = Constant (PrimNum 0)
               -- TODO Float
               | (Just a', Just b') <- (coerceToNum a, coerceToNum b) =
-                  Constant $ PrimInt (a' `div` b')
+                  Constant $ PrimNum (a' / b')
           eval (Compound "^" [a, b])
-              | Just 1 <- coerceToNum a = Constant (PrimInt 1)
-              | Just 0 <- coerceToNum b = Constant (PrimInt 1)
+              | Just 1 <- coerceToNum a = Constant (PrimNum 1)
+              | Just 0 <- coerceToNum b = Constant (PrimNum 1)
               | Just 1 <- coerceToNum b = a
               -- TODO Float
               | (Just a', Just b') <- (coerceToNum a, coerceToNum b) =
-                  Constant $ PrimInt (a' ^ b')
+                  Constant $ PrimNum (a' ** b')
           eval x = x
-          coerceToNum (Constant (PrimInt n)) = Just n
+          coerceToNum (Constant (PrimNum n)) = Just n
           coerceToNum _ = Nothing
 
 flattenSingletons :: [String] -> Pass a a

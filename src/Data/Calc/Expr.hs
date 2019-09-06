@@ -6,6 +6,8 @@ module Data.Calc.Expr(Expr(..), Prim(..),
 import Data.Calc.Repr
 import Data.Calc.Number
 
+import Data.Semigroup
+
 data Expr a = Constant a
             | Compound String [Expr a]
               deriving (Show, Eq, Ord, Functor)
