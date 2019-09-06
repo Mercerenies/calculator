@@ -3,10 +3,12 @@ module Data.Calc.Parse(assocToOpAssoc, operatorTable, parseExpr) where
 
 import Data.Calc.Expr
 import Data.Calc.Operator
+import Data.Calc.Number
 import Data.Calc.Util
 
 import Text.Parsec
 import qualified Text.Parsec.Expr as Expr
+import Text.ParserCombinators.Parsec.Number(decimalFloat)
 import Data.Functor.Identity
 import qualified Data.Map as Map
 import qualified Data.List as List
@@ -15,8 +17,11 @@ import Data.Ord
 
 type Parser = Parsec String ()
 
-nat :: Parser Integer
-nat = read <$> many1 digit
+--nat :: Parser Integer
+--nat = read <$> many1 digit
+
+double :: Parser Number
+double = either (NRatio . fromInteger) NDouble <$> decimalFloat
 
 var :: Parser String
 var = (:) <$> varStartChar <*> many varChar
@@ -38,7 +43,7 @@ fnCall = do
 
 atom :: Parser (Expr Prim)
 atom = (char '(' *> expr <* char ')') <|>
-       (Constant . PrimNum . fromInteger <$> nat <?> "natural number") <|>
+       (Constant . PrimNum <$> double <?> "real number") <|>
        (fnCall <?> "function") <|>
        (Constant . PrimVar <$> var <?> "variable")
 
