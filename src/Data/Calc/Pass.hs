@@ -1,8 +1,9 @@
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveFunctor, LambdaCase #-}
 
-module Data.Calc.Pass(Pass(..),
+module Data.Calc.Pass(PassT(..), Pass, pass,
                       (.), id, -- Re-export the Control.Category versions
-                      runPassOnceTD, runPassOnceBU, runPassOnceFull,
+                      runPassOnceTDM, runPassOnceBUM, runPassOnceFullM,
+                      runPassTDM, runPassBUM, runPassFullM,
                       runPassTD, runPassBU, runPassFull) where
 
 import Data.Calc.Expr
@@ -10,41 +11,57 @@ import Data.Calc.Util
 
 import Prelude hiding (id, (.))
 import Control.Category
+import Control.Monad
+import Data.Functor.Identity
 import Data.Profunctor
 
-newtype Pass a b = Pass (Expr a -> Expr b)
+newtype PassT m a b = PassT (Expr a -> m (Expr b))
     deriving (Functor)
 
-instance Category Pass where
-    id = Pass (id)
-    Pass f . Pass g = Pass (f . g)
+type Pass = PassT Identity
 
-instance Profunctor Pass where
-    dimap f g (Pass h) = Pass (fmap g . h . fmap f)
+instance Monad m => Category (PassT m) where
+    id = PassT pure
+    PassT f . PassT g = PassT (f <=< g)
 
-runPassOnceTD :: Pass a a -> Expr a -> Expr a
-runPassOnceTD (Pass f) e =
-    case f e of
-      Constant x -> Constant x
-      Compound h ts -> Compound h $ fmap (runPassOnceTD (Pass f)) ts
+instance Functor m => Profunctor (PassT m) where
+    dimap f g (PassT h) = PassT (fmap (fmap g) . h . fmap f)
 
-runPassOnceBU :: Pass a a -> Expr a -> Expr a
-runPassOnceBU (Pass f) e = f e'
+pass :: (Expr a -> Expr b) -> Pass a b
+pass f = PassT (Identity . f)
+
+runPassOnceTDM :: Monad m => PassT m a a -> Expr a -> m (Expr a)
+runPassOnceTDM (PassT f) e =
+    f e >>= \case
+      Constant x -> pure $ Constant x
+      Compound h ts -> Compound h <$> mapM (runPassOnceTDM (PassT f)) ts
+
+runPassOnceBUM :: Monad m => PassT m a a -> Expr a -> m (Expr a)
+runPassOnceBUM (PassT f) e = e' >>= f
     where e' = case e of
-                 Constant x -> Constant x
-                 Compound h ts -> Compound h $ fmap (runPassOnceBU (Pass f)) ts
+                 Constant x -> pure $ Constant x
+                 Compound h ts -> Compound h <$> mapM (runPassOnceBUM (PassT f)) ts
 
-runPassOnceFull :: Pass a a -> Expr a -> Expr a
-runPassOnceFull (Pass f) e = f e'
-    where e' = case f e of
-                 Constant x -> Constant x
-                 Compound h ts -> Compound h $ fmap (runPassOnceFull (Pass f)) ts
+runPassOnceFullM :: Monad m => PassT m a a -> Expr a -> m (Expr a)
+runPassOnceFullM (PassT f) e = e' >>= f
+    where e' = f e >>= \case
+                 Constant x -> pure (Constant x)
+                 Compound h ts -> Compound h <$> mapM (runPassOnceFullM (PassT f)) ts
+
+runPassTDM :: (Eq a, Monad m) => PassT m a a -> Expr a -> m (Expr a)
+runPassTDM p = untilFixedM (runPassOnceTDM p)
+
+runPassBUM :: (Eq a, Monad m) => PassT m a a -> Expr a -> m (Expr a)
+runPassBUM p = untilFixedM (runPassOnceBUM p)
+
+runPassFullM :: (Eq a, Monad m) => PassT m a a -> Expr a -> m (Expr a)
+runPassFullM p = untilFixedM (runPassOnceFullM p)
 
 runPassTD :: Eq a => Pass a a -> Expr a -> Expr a
-runPassTD p = untilFixed (runPassOnceTD p)
+runPassTD p = runIdentity . runPassTDM p
 
 runPassBU :: Eq a => Pass a a -> Expr a -> Expr a
-runPassBU p = untilFixed (runPassOnceBU p)
+runPassBU p = runIdentity . runPassBUM p
 
 runPassFull :: Eq a => Pass a a -> Expr a -> Expr a
-runPassFull p = untilFixed (runPassOnceFull p)
+runPassFull p = runIdentity . runPassFullM p

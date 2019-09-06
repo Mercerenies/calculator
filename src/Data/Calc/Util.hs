@@ -1,5 +1,7 @@
+{-# LANGUAGE LambdaCase #-}
 
-module Data.Calc.Util(untilFixed, maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
+module Data.Calc.Util(untilFixed, untilFixedM,
+                      maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
                       stripString) where
 
 import Data.Map(Map)
@@ -16,6 +18,12 @@ untilFixed f = go
               case f a of
                 a' | a == a' -> a
                    | otherwise -> go a'
+
+untilFixedM :: (Eq a, Monad m) => (a -> m a) -> a -> m a
+untilFixedM f = go
+    where go a = f a >>= \case
+                   a' | a == a' -> pure a
+                      | otherwise -> go a'
 
 maybeToMonoid :: Monoid a => Maybe a -> a
 maybeToMonoid = maybe mempty id
