@@ -1,32 +1,160 @@
+{-# LANGUAGE Rank2Types #-}
 
-module Data.Calc.Number(Number(..), RealNum(..), toDouble, dot, ii) where
+module Data.Calc.Number(Number(..), cmp, lexCmp) where
 
 import Data.Ratio
-import Control.Arrow
+import Data.Complex
+import Data.Semigroup
+import Control.Applicative
 
-data Number = Number RealNum RealNum -- Real and complex parts
-              deriving (Eq)
-
-data RealNum = NRatio Rational
-             | NDouble Double
+data Number = NRatio Rational
+            | NDouble Double
+            | NComplex (Complex Double)
 
 instance Show Number where
-    showsPrec n (Number a b)
-        | b == 0 = showsPrec n a
-        | otherwise = showsPrec n (a, b) -- Show it in tuple form
-
-instance Show RealNum where
     showsPrec _ (NRatio r) =
         case (numerator r, denominator r) of
           (n, 1) -> shows n
           (n, m) -> shows n . (":" ++) . shows m
     showsPrec _ (NDouble d) = shows d
+    showsPrec _ (NComplex (a :+ b)) = shows (a, b) -- Show in tuple form
 
-toDouble :: RealNum -> Double
-toDouble (NRatio a) = fromRational a
-toDouble (NDouble a) = a
+rToD :: Rational -> Double
+rToD = fromRational
 
-pow :: RealNum -> Rational -> RealNum
+dToC :: Double -> Complex Double
+dToC = (:+ 0)
+
+rToC :: Rational -> Complex Double
+rToC = dToC . rToD
+
+--toR :: Number -> Maybe Rational
+--toR (NRatio a) = Just a
+--toR _ = Nothing
+
+toD :: Number -> Maybe Double
+toD (NRatio a) = Just (rToD a)
+toD (NDouble a) = Just a
+toD _ = Nothing
+
+toC :: Number -> Complex Double
+toC (NRatio a) = rToC a
+toC (NDouble a) = dToC a
+toC (NComplex a) = a
+
+binaryPromote :: (forall a. (Fractional a, Eq a) => a -> a -> a) -> Number -> Number -> Number
+binaryPromote f a b =
+    case (a, b) of
+      (NComplex a', NComplex b') -> NComplex $ f a' b'
+      (NComplex a', NDouble  b') -> NComplex $ f a' (dToC b')
+      (NComplex a', NRatio   b') -> NComplex $ f a' (rToC b')
+      (NDouble  a', NComplex b') -> NComplex $ f (dToC a') b'
+      (NRatio   a', NComplex b') -> NComplex $ f (rToC a') b'
+      (NDouble  a', NDouble  b') -> NDouble  $ f a' b'
+      (NDouble  a', NRatio   b') -> NDouble  $ f a' (rToD b')
+      (NRatio   a', NDouble  b') -> NDouble  $ f (rToD a') b'
+      (NRatio   a', NRatio   b') -> NRatio   $ f a' b'
+
+unaryPromote :: (forall a. (Fractional a, Eq a) => a -> a) -> Number -> Number
+unaryPromote f a =
+    case a of
+      NComplex a' -> NComplex $ f a'
+      NDouble  a' -> NDouble  $ f a'
+      NRatio   a' -> NRatio   $ f a'
+
+floatingPromote :: (forall a. (Floating a, Eq a) => a -> a) -> Number -> Number
+floatingPromote f a =
+    case a of
+      NComplex a' -> NComplex $ f a'
+      NDouble  a' -> NDouble  $ f a'
+      NRatio   a' -> NDouble  $ f (fromRational a')
+
+binaryPromote' :: (forall a. (Fractional a, Eq a) => a -> a -> b) -> Number -> Number -> b
+binaryPromote' f a b =
+    case (a, b) of
+      (NComplex a', NComplex b') -> f a' b'
+      (NComplex a', NDouble  b') -> f a' (dToC b')
+      (NComplex a', NRatio   b') -> f a' (rToC b')
+      (NDouble  a', NComplex b') -> f (dToC a') b'
+      (NRatio   a', NComplex b') -> f (rToC a') b'
+      (NDouble  a', NDouble  b') -> f a' b'
+      (NDouble  a', NRatio   b') -> f a' (rToD b')
+      (NRatio   a', NDouble  b') -> f (rToD a') b'
+      (NRatio   a', NRatio   b') -> f a' b'
+
+instance Eq Number where
+    (==) = binaryPromote' (==)
+
+-- Refuses to compare if either argument is complex.
+cmp :: Number -> Number -> Maybe Ordering
+NRatio a `cmp` NRatio a' = Just (a `compare` a')
+a `cmp` a' = liftA2 compare (toD a) (toD a')
+
+-- "Lexicographic" comparison. Works like the derived Ord instance
+-- would if Data.Complex had a (derived) Ord as well, ignoring the
+-- usual rules of complex numbers.
+lexCmp :: Number -> Number -> Ordering
+lexCmp (NRatio a) (NRatio a') = a `compare` a'
+lexCmp (NRatio _) _ = LT
+lexCmp _ (NRatio _) = GT
+lexCmp (NDouble a) (NDouble a') = a `compare` a'
+lexCmp (NDouble _) _ = LT
+lexCmp _ (NDouble _) = GT
+lexCmp (NComplex (a :+ b)) (NComplex (a' :+ b')) = a `compare` a' <> b `compare` b'
+
+pow :: Number -> Number -> Number
+-- Deal with the "base" cases of zero.
+pow _ 0 = NRatio 1
+pow 0 _ = NRatio 0
+-- If either argument is complex, so is the result.
+pow (NComplex a) b = NComplex $ a ** (toC b)
+pow a (NComplex b) = NComplex $ (toC a) ** b
+-- Next, if the base is positive, we can keep the result real
+pow (NRatio a) (NRatio b) | a > 0 && denominator b == 1 = NRatio $ a ^^ numerator b
+pow (NRatio a) (NRatio b) | a > 0 = NDouble $ rToD a ** rToD b
+pow (NDouble a) (NDouble b) | a > 0 = NDouble $ a ** b
+pow (NRatio a) (NDouble b) | a > 0 = NDouble $ rToD a ** b
+pow (NDouble a) (NRatio b) | a > 0 && denominator b == 1 = NDouble $ a ^^ numerator b
+pow (NDouble a) (NRatio b) | a > 0 = NDouble $ a ** rToD b
+-- Next, if the base is negative, we can only remain real if the exponent is an integer
+pow (NRatio a) (NRatio b) | denominator b == 1 = NRatio $ a ^^ numerator b
+pow (NDouble a) (NRatio b) | denominator b == 1 = NDouble $ a ^^ numerator b
+-- Otherwise, go complex, as all bets are off
+pow a b = NComplex $ toC a ** toC b
+
+
+instance Num Number where
+    (+) = binaryPromote (+)
+    (*) = binaryPromote (*)
+    negate = unaryPromote negate
+    abs = unaryPromote abs
+    signum (NRatio a) = NRatio (signum a)
+    signum (NDouble a) = NRatio (toRational $ signum a) -- Should be +/- 1 or 0 so make it rational
+    signum (NComplex a) = NComplex a -- Probably still complex so leave it
+    fromInteger = NRatio . fromInteger
+
+instance Fractional Number where
+    recip = unaryPromote recip
+    fromRational = NRatio
+
+instance Floating Number where
+    pi = NDouble pi
+    (**) = pow
+    exp   = floatingPromote exp
+    log   = floatingPromote log
+    sin   = floatingPromote sin
+    cos   = floatingPromote cos
+    asin  = floatingPromote asin
+    acos  = floatingPromote acos
+    atan  = floatingPromote atan
+    sinh  = floatingPromote sinh
+    cosh  = floatingPromote cosh
+    asinh = floatingPromote asinh
+    acosh = floatingPromote acosh
+    atanh = floatingPromote atanh
+
+{-
+pow :: Number -> Rational -> Number
 pow a b
     -- a^0 = 1 (Modulo issues with 0^0 I suppose...)
     | b == 0 = 1
@@ -34,80 +162,6 @@ pow a b
     | denominator b == 1 = a ^^ numerator b
     -- Rational non-integer, I can't help you
     | otherwise = NDouble $ toDouble a ** fromRational b
-
-dot :: Number -> Number -> RealNum
-dot (Number a b) (Number a' b') = a * a' + b * b'
-
-ii :: Number
-ii = Number 0 1
-
-instance Eq RealNum where
-    NRatio a == NRatio b = a == b
-    a == b = toDouble a == toDouble b
-
-instance Ord RealNum where
-    NRatio a `compare` NRatio b = a `compare` b
-    a `compare` b = toDouble a `compare` toDouble b
-
-instance Num RealNum where
-    NRatio a + NRatio b = NRatio (a + b)
-    a + b = NDouble (toDouble a + toDouble b)
-    NRatio a * NRatio b = NRatio (a * b)
-    a * b = NDouble (toDouble a * toDouble b)
-    negate (NRatio a) = NRatio (negate a)
-    negate (NDouble a) = NDouble (negate a)
-    abs (NRatio a) = NRatio (abs a)
-    abs (NDouble a) = NDouble (abs a)
-    signum (NRatio a) = NRatio (signum a)
-    signum (NDouble a) = NRatio (toRational $ signum a)
-    fromInteger n = NRatio (fromInteger n)
-
-instance Fractional RealNum where
-    fromRational = NRatio
-    recip (NRatio a) = NRatio (recip a)
-    recip (NDouble a) = NDouble (recip a)
-
-instance Floating RealNum where
-    pi = NDouble pi
-    _ ** 0 = 1
-    a ** NRatio b = pow a b                    -- Try to keep it rational, if we can...
-    a ** NDouble b = NDouble $ toDouble a ** b -- but we can't always.
-    exp   a = NDouble $ exp   (toDouble a)
-    log   a = NDouble $ log   (toDouble a)
-    sin   a = NDouble $ sin   (toDouble a)
-    cos   a = NDouble $ cos   (toDouble a)
-    asin  a = NDouble $ asin  (toDouble a)
-    acos  a = NDouble $ acos  (toDouble a)
-    atan  a = NDouble $ atan  (toDouble a)
-    sinh  a = NDouble $ sinh  (toDouble a)
-    cosh  a = NDouble $ sinh  (toDouble a)
-    asinh a = NDouble $ asinh (toDouble a)
-    acosh a = NDouble $ acosh (toDouble a)
-    atanh a = NDouble $ atanh (toDouble a)
-
-instance Real RealNum where
-    toRational (NRatio a) = a
-    toRational (NDouble a) = toRational a
-
-instance RealFrac RealNum where
-    properFraction (NRatio a) = second NRatio $ properFraction a
-    properFraction (NDouble a) = second NDouble $ properFraction a
-{-
-instance RealFloat RealNum where
-    floatRadix = floatRadix . toDouble
-    floatDigits = floatDigits . toDouble
-    floatRange = floatRange . toDouble
-    decodeFloat = decodeFloat . toDouble
-    encodeFloat n m = NDouble $ encodeFloat n m
-    isNaN (NRatio _) = False
-    isNaN (NDouble a) = isNaN a
-    isInfinite (NRatio _) = False
-    isInfinite (NDouble a) = isInfinite a
-    isDenormalized = isDenormalized . toDouble
-    isNegativeZero (NRatio _) = False
-    isNegativeZero (NDouble a) = isNegativeZero a
-    isIEEE = isIEEE . toDouble
--}
 
 instance Num Number where
     Number a b + Number a' b' = Number (a + a') (b + b')
@@ -132,3 +186,4 @@ instance Floating Number where
         where Number magn _ = abs (Number a b)
     sin x = (exp (ii * x) - exp (- ii * x)) / (2 * ii)
     cos x = (exp (ii * x) + exp (- ii * x)) / 2
+-}

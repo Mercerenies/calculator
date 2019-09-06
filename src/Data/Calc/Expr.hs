@@ -6,8 +6,6 @@ module Data.Calc.Expr(Expr(..), Prim(..),
 import Data.Calc.Repr
 import Data.Calc.Number
 
-import Data.Semigroup
-
 data Expr a = Constant a
             | Compound String [Expr a]
               deriving (Show, Eq, Ord, Functor)
@@ -23,9 +21,7 @@ instance Ord Prim where
     PrimVar a `compare` PrimVar b = a `compare` b
     PrimNum _ `compare` PrimVar _ = LT
     PrimVar _ `compare` PrimNum _ = GT
-    PrimNum a `compare` PrimNum b = a1 `compare` b1 <> a2 `compare` b2
-        where Number (a1 :+ a2) = a
-              Number (b1 :+ b2) = b
+    PrimNum a `compare` PrimNum b = a `lexCmp` b
 
 instance Show Prim where
     showsPrec n (PrimNum x) = showsPrec n x
