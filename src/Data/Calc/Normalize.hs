@@ -116,6 +116,11 @@ foldConstants = Pass eval
           coerceToNum (Constant (PrimNum n)) = Just n
           coerceToNum _ = Nothing
 
+-- TODO Generalize this to be typeclassed like above.
+evalFunctions :: Pass Prim Prim
+evalFunctions = id -- Pass eval -- ////
+--    where eval (Compound h xs) = 
+
 flattenSingletons :: [String] -> Pass a a
 flattenSingletons ss = foldr (.) id $ map (Pass . go) ss
     where go str (Compound str' [a]) | str == str' = a

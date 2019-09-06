@@ -14,14 +14,24 @@ import qualified Data.Map as Map
 import qualified Data.List as List
 import Data.Function
 import Data.Ord
+import Data.Ratio
+import Control.Monad
 
 type Parser = Parsec String ()
 
---nat :: Parser Integer
---nat = read <$> many1 digit
+nat :: Parser Integer
+nat = read <$> many1 digit
 
 double :: Parser Number
 double = either (NRatio . fromInteger) NDouble <$> decimalFloat
+
+rat :: Parser Number
+rat = try $ do
+        num <- nat
+        _ <- char ':'
+        denom <- nat
+        guard $ denom /= 0
+        return $ NRatio (num % denom)
 
 var :: Parser String
 var = (:) <$> varStartChar <*> many varChar
@@ -43,6 +53,7 @@ fnCall = do
 
 atom :: Parser (Expr Prim)
 atom = (char '(' *> expr <* char ')') <|>
+       (Constant . PrimNum <$> rat <?> "rational number") <|>
        (Constant . PrimNum <$> double <?> "real number") <|>
        (fnCall <?> "function") <|>
        (Constant . PrimVar <$> var <?> "variable")
