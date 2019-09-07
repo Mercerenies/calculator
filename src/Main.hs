@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 -- I'm using this file for debugging things right now, so let's ignore
 -- the incompleteness, eh?
@@ -13,8 +14,10 @@ import Data.Calc.Print
 import Data.Calc.Pass
 import Data.Calc.Normalize
 import Data.Calc.Parse
+import Data.Calc.Mode
 
 import Control.Monad
+import Control.Monad.Reader
 import System.IO
 import Prelude hiding ((.), id)
 
@@ -45,7 +48,7 @@ example3 = Compound "+" [Compound "+" [Constant (PrimVar "A"), Constant (PrimVar
 example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
-myPass :: Pass Prim Prim
+myPass :: MonadReader ModeInfo m => PassT m Prim Prim
 myPass = sortTermsOfStd . flattenStdSingletons . evalFunctions . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
@@ -56,7 +59,7 @@ main = forever $ do
          case parseExpr "(stdin)" line of
            Left err -> print err
            Right expr -> do
-                   let expr' = runPassTD myPass expr
+                   let expr' = runReader (runPassTDM myPass expr) defaultMode
                    putStrLn $ lispLikeShow expr
                    putStrLn $ formulaShow expr
                    putStrLn $ formulaShow expr'

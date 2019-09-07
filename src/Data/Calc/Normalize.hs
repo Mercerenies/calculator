@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 
 module Data.Calc.Normalize where
 
@@ -7,6 +7,7 @@ import Data.Calc.Pass
 import Data.Calc.Repr
 import Data.Calc.Util
 import Data.Calc.Function
+import Data.Calc.Mode
 
 import Prelude hiding ((.), id)
 import Data.List(sort)
@@ -15,6 +16,7 @@ import Data.Map(Map)
 import qualified Data.Map as Map
 import Data.Monoid
 import Control.Monad.State
+import Control.Monad.Reader
 
 normalizeNegatives :: Monad m => ReprInteger a => PassT m a a
 normalizeNegatives = pass subtractionPass . pass negationPass
@@ -120,10 +122,10 @@ foldConstants = pass eval
           coerceToNum _ = Nothing
 
 -- TODO Generalize this to be typeclassed like above.
-evalFunctions :: Monad m => PassT m Prim Prim
-evalFunctions = pass eval
+evalFunctions :: MonadReader ModeInfo m => PassT m Prim Prim
+evalFunctions = PassT eval
     where eval (Compound h xs) = applyToStd h xs
-          eval x = x
+          eval x = pure x
 
 flattenSingletons :: Monad m => [String] -> PassT m a a
 flattenSingletons ss = foldr (.) id $ map (pass . go) ss
