@@ -7,6 +7,8 @@ import Data.Complex
 import Data.Semigroup
 import Control.Applicative
 
+-- ///// Need to make asin, acos, etc. produce complex numbers if given out of range (for real) args
+
 data Number = NRatio Rational
             | NDouble Double
             | NComplex (Complex Double)
@@ -121,7 +123,6 @@ pow (NRatio a) (NRatio b) | denominator b == 1 = NRatio $ a ^^ numerator b
 pow (NDouble a) (NRatio b) | denominator b == 1 = NDouble $ a ^^ numerator b
 -- Otherwise, go complex, as all bets are off
 pow a b = NComplex $ toC a ** toC b
-
 
 instance Num Number where
     (+) = binaryPromote (+)
