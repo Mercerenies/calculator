@@ -8,13 +8,14 @@ import Data.Calc.Util
 
 import Text.Parsec
 import qualified Text.Parsec.Expr as Expr
-import Text.ParserCombinators.Parsec.Number(decimalFloat)
+import Text.ParserCombinators.Parsec.Number(decimalFloat, floating2)
 import Data.Functor.Identity
 import qualified Data.Map as Map
 import qualified Data.List as List
 import Data.Function
 import Data.Ord
 import Data.Ratio
+import Data.Complex
 import Control.Monad
 
 type Parser = Parsec String ()
@@ -32,6 +33,15 @@ rat = try $ do
         denom <- nat
         guard $ denom /= 0
         return $ NRatio (num % denom)
+
+complexNumber :: Parser Number
+complexNumber = do
+  _ <- char '(' <* spaces
+  re <- floating2 True
+  _ <- spaces *> char ',' <* spaces
+  im <- floating2 True
+  _ <- spaces *> char ')'
+  return . NComplex $ re :+ im
 
 var :: Parser String
 var = (:) <$> varStartChar <*> many varChar
@@ -52,7 +62,8 @@ fnCall = do
   return $ Compound name args
 
 atom :: Parser (Expr Prim)
-atom = (char '(' *> spaces *> expr <* spaces <* char ')') <|>
+atom = ((try $ Constant . PrimNum <$> complexNumber) <?> "complex number") <|>
+       (char '(' *> spaces *> expr <* spaces <* char ')') <|>
        (Constant . PrimNum <$> rat <?> "rational number") <|>
        (Constant . PrimNum <$> double <?> "real number") <|>
        (fnCall <?> "function") <|>
