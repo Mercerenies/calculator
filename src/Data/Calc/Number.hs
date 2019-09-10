@@ -148,16 +148,24 @@ instance Floating Number where
     pi = NDouble pi
     (**) = pow
     exp   = floatingPromote exp
-    log   = floatingPromote log
+    log (NRatio a) = log (NDouble $ fromRational a)
+    log (NDouble a) | a > 0 = NDouble $ log a
+    log b = NComplex . log $ toC b
     sin   = floatingPromote sin
     cos   = floatingPromote cos
-    asin  = floatingPromote asin
-    acos  = floatingPromote acos
+    asin (NRatio a) = asin (NDouble $ fromRational a)
+    asin (NDouble a) | a >= -1 && a <= 1 = NDouble $ asin a
+    asin b = NComplex . asin $ toC b
+    acos (NRatio a) = acos (NDouble $ fromRational a)
+    acos (NDouble a) | a >= -1 && a <= 1 = NDouble $ acos a
+    acos b = NComplex . acos $ toC b
     atan  = floatingPromote atan
     sinh  = floatingPromote sinh
     cosh  = floatingPromote cosh
     asinh = floatingPromote asinh
-    acosh = floatingPromote acosh
+    acosh (NRatio a) = acosh (NDouble $ fromRational a)
+    acosh (NDouble a) | a >= 1 = NDouble $ acosh a
+    acosh b = NComplex . acosh $ toC b
     atanh = floatingPromote atanh
 
 {-
