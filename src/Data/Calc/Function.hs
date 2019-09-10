@@ -1,10 +1,13 @@
 {-# LANGUAGE Rank2Types, FlexibleContexts, GADTs, LambdaCase #-}
 
-module Data.Calc.Function where
+module Data.Calc.Function(Function(..), functionSynonym,
+                          stdBuiltins,
+                          applyTo, applyToStd) where
 
 import Data.Calc.Expr
 import Data.Calc.Mode
 import Data.Calc.Number
+import Data.Calc.Unit.Radians
 
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -12,16 +15,6 @@ import Control.Monad.Reader
 
 newtype Function where
     Function :: (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))) -> Function
-
-thetaToRad :: (Floating a, MonadReader ModeInfo m) => a -> m a
-thetaToRad x = asks angularMode >>= \case
-               Radians -> return x
-               Degrees -> return $ (pi / 180) * x
-
-radToTheta :: (Floating a, MonadReader ModeInfo m) => a -> m a
-radToTheta x = asks angularMode >>= \case
-               Radians -> return x
-               Degrees -> return $ (180 / pi) * x
 
 simpleUnaryFn :: (forall m. MonadReader ModeInfo m => Number -> m Number) ->
                  (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim)))
