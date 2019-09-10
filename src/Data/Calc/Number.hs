@@ -44,18 +44,25 @@ toC (NRatio a) = rToC a
 toC (NDouble a) = dToC a
 toC (NComplex a) = a
 
-binaryPromote :: (forall a. (Fractional a, Eq a) => a -> a -> a) -> Number -> Number -> Number
-binaryPromote f a b =
+binaryFold :: (Rational -> Rational -> b) ->
+              (Double -> Double -> b) ->
+              (Complex Double -> Complex Double -> b) ->
+              (Number -> Number -> b)
+binaryFold f g h a b =
     case (a, b) of
-      (NComplex a', NComplex b') -> NComplex $ f a' b'
-      (NComplex a', NDouble  b') -> NComplex $ f a' (dToC b')
-      (NComplex a', NRatio   b') -> NComplex $ f a' (rToC b')
-      (NDouble  a', NComplex b') -> NComplex $ f (dToC a') b'
-      (NRatio   a', NComplex b') -> NComplex $ f (rToC a') b'
-      (NDouble  a', NDouble  b') -> NDouble  $ f a' b'
-      (NDouble  a', NRatio   b') -> NDouble  $ f a' (rToD b')
-      (NRatio   a', NDouble  b') -> NDouble  $ f (rToD a') b'
-      (NRatio   a', NRatio   b') -> NRatio   $ f a' b'
+      (NComplex a', NComplex b') -> h a' b'
+      (NComplex a', NDouble  b') -> h a' (dToC b')
+      (NComplex a', NRatio   b') -> h a' (rToC b')
+      (NDouble  a', NComplex b') -> h (dToC a') b'
+      (NRatio   a', NComplex b') -> h (rToC a') b'
+      (NDouble  a', NDouble  b') -> g a' b'
+      (NDouble  a', NRatio   b') -> g a' (rToD b')
+      (NRatio   a', NDouble  b') -> g (rToD a') b'
+      (NRatio   a', NRatio   b') -> f a' b'
+
+
+binaryPromote :: (forall a. (Fractional a, Eq a) => a -> a -> a) -> Number -> Number -> Number
+binaryPromote f = binaryFold (fmap NRatio . f) (fmap NDouble . f) (fmap NComplex . f)
 
 unaryPromote :: (forall a. (Fractional a, Eq a) => a -> a) -> Number -> Number
 unaryPromote f a =
@@ -71,21 +78,20 @@ floatingPromote f a =
       NDouble  a' -> NDouble  $ f a'
       NRatio   a' -> NDouble  $ f (fromRational a')
 
-binaryPromote' :: (forall a. (Fractional a, Eq a) => a -> a -> b) -> Number -> Number -> b
-binaryPromote' f a b =
-    case (a, b) of
-      (NComplex a', NComplex b') -> f a' b'
-      (NComplex a', NDouble  b') -> f a' (dToC b')
-      (NComplex a', NRatio   b') -> f a' (rToC b')
-      (NDouble  a', NComplex b') -> f (dToC a') b'
-      (NRatio   a', NComplex b') -> f (rToC a') b'
-      (NDouble  a', NDouble  b') -> f a' b'
-      (NDouble  a', NRatio   b') -> f a' (rToD b')
-      (NRatio   a', NDouble  b') -> f (rToD a') b'
-      (NRatio   a', NRatio   b') -> f a' b'
+--binaryPromote' :: (forall a. (Fractional a, Eq a) => a -> a -> b) -> Number -> Number -> b
+--binaryPromote' f = binaryFold f f f
 
 instance Eq Number where
-    (==) = binaryPromote' (==)
+    -- The various simplifications will choke if an expression can't
+    -- be equal to itself, because the ideal normalization is one that
+    -- can get to a normal form, i.e. a form where applying the
+    -- normalization produces a value equal to the former. We can't do
+    -- that if equality is not reflexive, hence we need to circumvent
+    -- the IEEE notion that NaN != NaN here.
+    (==) = binaryFold rEq dEq cEq
+        where rEq a a' = (a == a')
+              dEq a a' = (a == a') || (isNaN a && isNaN a')
+              cEq (a :+ b) (a' :+ b') = (a `dEq` a') && (b `dEq` b')
 
 -- Refuses to compare if either argument is complex.
 cmp :: Number -> Number -> Maybe Ordering
