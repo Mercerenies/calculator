@@ -52,7 +52,7 @@ fnCall = do
   return $ Compound name args
 
 atom :: Parser (Expr Prim)
-atom = (char '(' *> expr <* char ')') <|>
+atom = (char '(' *> spaces *> expr <* spaces <* char ')') <|>
        (Constant . PrimNum <$> rat <?> "rational number") <|>
        (Constant . PrimNum <$> double <?> "real number") <|>
        (fnCall <?> "function") <|>
