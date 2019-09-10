@@ -149,7 +149,7 @@ instance Floating Number where
     (**) = pow
     exp   = floatingPromote exp
     log (NRatio a) = log (NDouble $ fromRational a)
-    log (NDouble a) | a > 0 = NDouble $ log a
+    log (NDouble a) | a >= 0 = NDouble $ log a
     log b = NComplex . log $ toC b
     sin   = floatingPromote sin
     cos   = floatingPromote cos

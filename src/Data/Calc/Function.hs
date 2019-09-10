@@ -28,6 +28,9 @@ simpleUnaryFn :: (forall m. MonadReader ModeInfo m => Number -> m Number) ->
 simpleUnaryFn fn [Constant (PrimNum a)] = (Just . Constant . PrimNum) <$> fn a
 simpleUnaryFn _ _ = pure Nothing
 
+functionSynonym :: String -> Function
+functionSynonym newname = Function (pure . Just . Compound newname)
+
 fsin :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
 fsin = simpleUnaryFn (fmap sin . thetaToRad)
 
@@ -64,6 +67,12 @@ facosh = simpleUnaryFn (radToTheta . acosh)
 fatanh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
 fatanh = simpleUnaryFn (radToTheta . atanh)
 
+flog :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
+flog = simpleUnaryFn (pure . log) -- TODO Exact result if arg == 1
+
+fexp :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
+fexp = simpleUnaryFn (pure . exp) -- TODO Exact result if arg == 0
+
 stdBuiltins :: Map String Function
 stdBuiltins = Map.fromList [
             ("sin", Function fsin),
@@ -77,7 +86,10 @@ stdBuiltins = Map.fromList [
             ("tanh", Function ftanh),
             ("asinh", Function fasinh),
             ("acosh", Function facosh),
-            ("atanh", Function fatanh)
+            ("atanh", Function fatanh),
+            ("log", functionSynonym "ln"),
+            ("ln", Function flog),
+            ("exp", Function fexp)
            ]
 
 applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
