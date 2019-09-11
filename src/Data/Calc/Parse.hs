@@ -8,7 +8,7 @@ import Data.Calc.Util
 
 import Text.Parsec
 import qualified Text.Parsec.Expr as Expr
-import Text.ParserCombinators.Parsec.Number(decimalFloat, floating2)
+import Text.ParserCombinators.Parsec.Number(decimalFloat, floating2, sign)
 import Data.Functor.Identity
 import qualified Data.Map as Map
 import qualified Data.List as List
@@ -37,9 +37,9 @@ rat = try $ do
 complexNumber :: Parser Number
 complexNumber = do
   _ <- char '(' <* spaces
-  re <- floating2 True
+  re <- sign <*> floating2 True
   _ <- spaces *> char ',' <* spaces
-  im <- floating2 True
+  im <- sign <*> floating2 True
   _ <- spaces *> char ')'
   return . NComplex $ re :+ im
 
