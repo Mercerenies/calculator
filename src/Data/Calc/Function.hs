@@ -29,7 +29,7 @@ stdBuiltins = compileFns [
             functionSynonym "log" "ln",
             Trans.flog, Trans.fexp,
             approx,
-            derivativeFn
+            derivativeFn stdBuiltins
            ]
 
 applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
