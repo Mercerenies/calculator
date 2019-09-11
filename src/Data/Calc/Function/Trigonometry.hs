@@ -5,6 +5,8 @@ module Data.Calc.Function.Trigonometry where
 import Data.Calc.Function.Type
 import Data.Calc.Unit.Radians
 
+-- ///// Derivatives (don't forget about degree / radian conversions)
+
 fsin :: Function
 fsin = function "sin" f
     where f :: FunctionType
