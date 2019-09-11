@@ -3,6 +3,7 @@
 module Data.Calc.Pass(PassT(..), Pass, pass,
                       (.), id, -- Re-export the Control.Category versions
                       runPassOnceTDM, runPassOnceBUM, runPassOnceFullM,
+                      runPassOnceTD, runPassOnceBU, runPassOnceFull,
                       runPassTDM, runPassBUM, runPassFullM,
                       runPassTD, runPassBU, runPassFull) where
 
@@ -47,6 +48,15 @@ runPassOnceFullM (PassT f) e = e' >>= f
     where e' = f e >>= \case
                  Constant x -> pure (Constant x)
                  Compound h ts -> Compound h <$> mapM (runPassOnceFullM (PassT f)) ts
+
+runPassOnceTD :: Pass a a -> Expr a -> Expr a
+runPassOnceTD p = runIdentity . runPassOnceTDM p
+
+runPassOnceBU :: Pass a a -> Expr a -> Expr a
+runPassOnceBU p = runIdentity . runPassOnceBUM p
+
+runPassOnceFull :: Pass a a -> Expr a -> Expr a
+runPassOnceFull p = runIdentity . runPassOnceFullM p
 
 runPassTDM :: (Eq a, Monad m) => PassT m a a -> Expr a -> m (Expr a)
 runPassTDM p = untilFixedM (runPassOnceTDM p)

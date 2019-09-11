@@ -8,21 +8,17 @@ import Data.Calc.Expr
 import Data.Calc.Mode
 import Data.Calc.Number
 import Data.Calc.Unit.Radians
+import Data.Calc.Function.Type
+import Data.Calc.Function.Approximate
 
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Control.Monad.Reader
 
-newtype Function where
-    Function :: (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))) -> Function
-
 simpleUnaryFn :: (forall m. MonadReader ModeInfo m => Number -> m Number) ->
                  (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim)))
 simpleUnaryFn fn [Constant (PrimNum a)] = (Just . Constant . PrimNum) <$> fn a
 simpleUnaryFn _ _ = pure Nothing
-
-functionSynonym :: String -> Function
-functionSynonym newname = Function (pure . Just . Compound newname)
 
 fsin :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
 fsin = simpleUnaryFn (fmap sin . thetaToRad)
@@ -82,7 +78,8 @@ stdBuiltins = Map.fromList [
             ("atanh", Function fatanh),
             ("log", functionSynonym "ln"),
             ("ln", Function flog),
-            ("exp", Function fexp)
+            ("exp", Function fexp),
+            ("N", approx)
            ]
 
 applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
