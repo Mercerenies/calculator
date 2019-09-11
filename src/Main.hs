@@ -49,7 +49,7 @@ example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
 myPass :: MonadReader ModeInfo m => PassT m Prim Prim
-myPass = sortTermsOfStd . flattenStdSingletons . evalFunctions . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+myPass = sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions . foldConstants . collectLikeTerms . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
 main = forever $ do
@@ -62,6 +62,7 @@ main = forever $ do
                    let expr' = runReader (runPassTDM myPass expr) defaultMode
                    putStrLn $ lispLikeShow expr
                    putStrLn $ formulaShow expr
+                   putStrLn $ lispLikeShow expr'
                    putStrLn $ formulaShow expr'
 
 --  let pass = myPass

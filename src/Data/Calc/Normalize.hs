@@ -63,6 +63,7 @@ collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a
 collectLikeFactors = pass collect
     where collect (Compound "*" xs) = let (res, m) = runState (concat <$> mapM match xs) Map.empty
                                       in Compound "*" (res ++ (map coalesce $ Map.toList m))
+          -- TODO Coalesce (y / y^2) and similar terms with division operator
           collect x = x
           match :: Expr a -> State (Map a [Expr a]) [Expr a]
           match (Constant a) | isVar a = [] <$ modify (mappendMap a [Constant (reprInteger 1)])

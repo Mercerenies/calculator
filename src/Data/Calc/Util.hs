@@ -2,15 +2,18 @@
 
 module Data.Calc.Util(untilFixed, untilFixedM,
                       maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
-                      stripString) where
+                      stripString,
+                      duplicateApply, duplicateApplyM) where
 
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Data.List(mapAccumL)
 import Data.Monoid
+import Data.Functor.Identity
 import qualified Data.Text as T
 import Control.Arrow
 import Control.Monad
+import Control.Applicative
 
 untilFixed :: Eq a => (a -> a) -> a -> a
 untilFixed f = go
@@ -42,3 +45,12 @@ accumSomeValues f = second join . mapAccum go
 
 stripString :: String -> String
 stripString = T.unpack . T.strip . T.pack
+
+-- duplicateApply f [a, b, c] = [[f a, b, c], [a, f b, c], [a, b, f c]]
+duplicateApply :: (a -> a) -> [a] -> [[a]]
+duplicateApply f = runIdentity . duplicateApplyM (Identity . f)
+
+duplicateApplyM :: Applicative m => (a -> m a) -> [a] -> m [[a]]
+duplicateApplyM f = go
+    where go [] = pure []
+          go (x:xs) = liftA2 (:) (liftA2 (:) (f x) (pure xs)) (fmap (x :) <$> (go xs))

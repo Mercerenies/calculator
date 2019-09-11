@@ -10,6 +10,7 @@ import Data.Calc.Function.Type
 import Data.Calc.Function.Approximate
 import qualified Data.Calc.Function.Trigonometry as Trig
 import qualified Data.Calc.Function.Transcendental as Trans
+import Data.Calc.Calculus.Derivative
 
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -27,7 +28,8 @@ stdBuiltins = compileFns [
             Trig.fasinh, Trig.facosh, Trig.fatanh,
             functionSynonym "log" "ln",
             Trans.flog, Trans.fexp,
-            approx
+            approx,
+            derivativeFn
            ]
 
 applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
