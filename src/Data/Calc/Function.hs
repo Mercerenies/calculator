@@ -23,9 +23,13 @@ compileFns = fmap (fnName &&& id) >>> Map.fromList
 stdBuiltins :: Map String Function
 stdBuiltins = compileFns [
             Trig.fsin, Trig.fcos, Trig.ftan,
+            Trig.fcsc, Trig.fsec, Trig.fcot,
             Trig.fasin, Trig.facos, Trig.fatan,
+            Trig.facsc, Trig.fasec, Trig.facot,
             Trig.fsinh, Trig.fcosh, Trig.ftanh,
+            Trig.fcsch, Trig.fsech, Trig.fcoth,
             Trig.fasinh, Trig.facosh, Trig.fatanh,
+            Trig.facsch, Trig.fasech, Trig.facoth,
             functionSynonym "log" "ln",
             Trans.flog, Trans.fexp,
             approx,
