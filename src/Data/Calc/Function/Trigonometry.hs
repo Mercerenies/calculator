@@ -2,45 +2,65 @@
 
 module Data.Calc.Function.Trigonometry where
 
-import Data.Calc.Expr
-import Data.Calc.Mode
 import Data.Calc.Function.Type
 import Data.Calc.Unit.Radians
 
-import Control.Monad.Reader
+fsin :: Function
+fsin = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (fmap sin . thetaToRad)
 
-fsin :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fsin = simpleUnaryFn (fmap sin . thetaToRad)
+fcos :: Function
+fcos = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (fmap cos . thetaToRad)
 
-fcos :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fcos = simpleUnaryFn (fmap cos . thetaToRad)
+ftan :: Function
+ftan = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (fmap tan . thetaToRad)
 
-ftan :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-ftan = simpleUnaryFn (fmap tan . thetaToRad)
+fasin :: Function
+fasin = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (radToTheta . asin)
 
-fasin :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fasin = simpleUnaryFn (radToTheta . asin)
+facos :: Function
+facos = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (radToTheta . acos)
 
-facos :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-facos = simpleUnaryFn (radToTheta . acos)
+fatan :: Function
+fatan = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (radToTheta . atan)
 
-fatan :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fatan = simpleUnaryFn (radToTheta . atan)
+fsinh :: Function
+fsinh = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (fmap sinh . thetaToRad)
 
-fsinh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fsinh = simpleUnaryFn (fmap sinh . thetaToRad)
+fcosh :: Function
+fcosh = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (fmap cosh . thetaToRad)
 
-fcosh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fcosh = simpleUnaryFn (fmap cosh . thetaToRad)
+ftanh :: Function
+ftanh = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (fmap tanh . thetaToRad)
 
-ftanh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-ftanh = simpleUnaryFn (fmap tanh . thetaToRad)
+fasinh :: Function
+fasinh = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (radToTheta . asinh)
 
-fasinh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fasinh = simpleUnaryFn (radToTheta . asinh)
+facosh :: Function
+facosh = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (radToTheta . acosh)
 
-facosh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-facosh = simpleUnaryFn (radToTheta . acosh)
-
-fatanh :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-fatanh = simpleUnaryFn (radToTheta . atanh)
+fatanh :: Function
+fatanh = Function f
+    where f :: FunctionType
+          f = simpleUnaryFn (radToTheta . atanh)

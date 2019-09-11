@@ -1,6 +1,6 @@
-{-# LANGUAGE Rank2Types, FlexibleContexts, GADTs #-}
+{-# LANGUAGE Rank2Types, FlexibleContexts #-}
 
-module Data.Calc.Function.Type(Function(..), functionSynonym,
+module Data.Calc.Function.Type(FunctionType, Function(..), functionSynonym,
                                simpleUnaryFn) where
 
 import Data.Calc.Expr
@@ -9,8 +9,11 @@ import Data.Calc.Number
 
 import Control.Monad.Reader
 
-newtype Function where
-    Function :: (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))) -> Function
+type FunctionType = (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim)))
+
+data Function = Function {
+      fnImpl :: FunctionType
+    }
 
 functionSynonym :: String -> Function
 functionSynonym newname = Function (pure . Just . Compound newname)

@@ -2,6 +2,6 @@
 * WHAT TO DO NEXT
 ** Sept 10, 2019
  + [X] Parse complex numbers
- + [ ] Function for converting to "numerical" results (promote
+ + [X] Function for converting to "numerical" results (promote
    non-integer ratios to float)
  + [ ] Derivatives

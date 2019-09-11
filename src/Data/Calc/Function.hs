@@ -8,8 +8,8 @@ import Data.Calc.Expr
 import Data.Calc.Mode
 import Data.Calc.Function.Type
 import Data.Calc.Function.Approximate
-import Data.Calc.Function.Trigonometry
-import Data.Calc.Function.Transcendental
+import qualified Data.Calc.Function.Trigonometry as Trig
+import qualified Data.Calc.Function.Transcendental as Trans
 
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -17,21 +17,21 @@ import Control.Monad.Reader
 
 stdBuiltins :: Map String Function
 stdBuiltins = Map.fromList [
-            ("sin", Function fsin),
-            ("cos", Function fcos),
-            ("tan", Function ftan),
-            ("asin", Function fasin),
-            ("acos", Function facos),
-            ("atan", Function fatan),
-            ("sinh", Function fsinh),
-            ("cosh", Function fcosh),
-            ("tanh", Function ftanh),
-            ("asinh", Function fasinh),
-            ("acosh", Function facosh),
-            ("atanh", Function fatanh),
+            ("sin", Trig.fsin),
+            ("cos", Trig.fcos),
+            ("tan", Trig.ftan),
+            ("asin", Trig.fasin),
+            ("acos", Trig.facos),
+            ("atan", Trig.fatan),
+            ("sinh", Trig.fsinh),
+            ("cosh", Trig.fcosh),
+            ("tanh", Trig.ftanh),
+            ("asinh", Trig.fasinh),
+            ("acosh", Trig.facosh),
+            ("atanh", Trig.fatanh),
             ("log", functionSynonym "ln"),
-            ("ln", Function flog),
-            ("exp", Function fexp),
+            ("ln", Trans.flog),
+            ("exp", Trans.fexp),
             ("N", approx)
            ]
 
