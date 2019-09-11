@@ -5,3 +5,4 @@
  + [X] Function for converting to "numerical" results (promote
    non-integer ratios to float)
  + [ ] Derivatives
+ + [ ] Simplify ~y / y^2~ (Consider ~D(tan(x)^2, x)~ as a stretch goal)

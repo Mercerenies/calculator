@@ -31,24 +31,36 @@ fcos = function "cos" f `withDeriv` inOneVar f'
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [Compound "sin" [x]]))
 
 ftan :: Function
-ftan = function "tan" f
+ftan = function "tan" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap tan . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "^" [Compound "sec" [x],
+                                                                       Constant (PrimNum 2)]))
 
 fcsc :: Function
-fcsc = function "csc" f
+fcsc = function "csc" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap (recip . sin) . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
+                                                          Compound "*" [Compound "csc" [x],
+                                                                        Compound "cot" [x]]
+                                                         ]))
 
 fsec :: Function
-fsec = function "sec" f
+fsec = function "sec" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap (recip . cos) . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "*" [Compound "csc" [x],
+                                                                       Compound "cot" [x]]))
 
 fcot :: Function
-fcot = function "cot" f
+fcot = function "cot" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap (recip . tan) . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
+                                                          Compound "^" [Compound "csc" [x],
+                                                                        Constant (PrimNum 2)]
+                                                         ]))
 
 fasin :: Function
 fasin = function "asin" f
