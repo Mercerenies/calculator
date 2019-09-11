@@ -7,11 +7,15 @@ import Data.Calc.Mode
 import Control.Monad.Reader
 
 thetaToRad :: (Floating a, MonadReader ModeInfo m) => a -> m a
-thetaToRad x = asks angularMode >>= \case
-               Radians -> return x
-               Degrees -> return $ (pi / 180) * x
+thetaToRad x = fmap (x *) thetaToRadFactor
 
 radToTheta :: (Floating a, MonadReader ModeInfo m) => a -> m a
-radToTheta x = asks angularMode >>= \case
-               Radians -> return x
-               Degrees -> return $ (180 / pi) * x
+radToTheta x = fmap (* x) radToThetaFactor
+
+thetaToRadFactor :: (Floating a, MonadReader ModeInfo m) => m a
+thetaToRadFactor = asks angularMode >>= \case
+                   Radians -> return 1
+                   Degrees -> return (pi / 180)
+
+radToThetaFactor :: (Floating a, MonadReader ModeInfo m) => m a
+radToThetaFactor = recip <$> thetaToRadFactor
