@@ -29,4 +29,4 @@ approximately [expr] = pure . Just $ runPassOnceTD promoteRatios expr
 approximately _ = pure Nothing
 
 approx :: Function
-approx = Function approximately
+approx = function "N" approximately

@@ -6,61 +6,61 @@ import Data.Calc.Function.Type
 import Data.Calc.Unit.Radians
 
 fsin :: Function
-fsin = Function f
+fsin = function "sin" f
     where f :: FunctionType
           f = simpleUnaryFn (fmap sin . thetaToRad)
 
 fcos :: Function
-fcos = Function f
+fcos = function "cos" f
     where f :: FunctionType
           f = simpleUnaryFn (fmap cos . thetaToRad)
 
 ftan :: Function
-ftan = Function f
+ftan = function "tan" f
     where f :: FunctionType
           f = simpleUnaryFn (fmap tan . thetaToRad)
 
 fasin :: Function
-fasin = Function f
+fasin = function "asin" f
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . asin)
 
 facos :: Function
-facos = Function f
+facos = function "acos" f
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . acos)
 
 fatan :: Function
-fatan = Function f
+fatan = function "atan" f
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . atan)
 
 fsinh :: Function
-fsinh = Function f
+fsinh = function "sinh" f
     where f :: FunctionType
           f = simpleUnaryFn (fmap sinh . thetaToRad)
 
 fcosh :: Function
-fcosh = Function f
+fcosh = function "cosh" f
     where f :: FunctionType
           f = simpleUnaryFn (fmap cosh . thetaToRad)
 
 ftanh :: Function
-ftanh = Function f
+ftanh = function "tanh" f
     where f :: FunctionType
           f = simpleUnaryFn (fmap tanh . thetaToRad)
 
 fasinh :: Function
-fasinh = Function f
+fasinh = function "asinh" f
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . asinh)
 
 facosh :: Function
-facosh = Function f
+facosh = function "acosh" f
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . acosh)
 
 fatanh :: Function
-fatanh = Function f
+fatanh = function "atanh" f
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . atanh)

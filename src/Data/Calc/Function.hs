@@ -29,7 +29,7 @@ stdBuiltins = Map.fromList [
             ("asinh", Trig.fasinh),
             ("acosh", Trig.facosh),
             ("atanh", Trig.fatanh),
-            ("log", functionSynonym "ln"),
+            ("log", functionSynonym "log" "ln"),
             ("ln", Trans.flog),
             ("exp", Trans.fexp),
             ("N", approx)
@@ -38,9 +38,9 @@ stdBuiltins = Map.fromList [
 applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
 applyTo m s args = case Map.lookup s m of
                      Nothing  -> pure $ Compound s args
-                     Just (Function fn) -> fn args >>= \case
-                                           Nothing -> pure (Compound s args)
-                                           Just x  -> pure x
+                     Just (Function { fnImpl = fn }) -> fn args >>= \case
+                                                        Nothing -> pure (Compound s args)
+                                                        Just x  -> pure x
 
 applyToStd :: MonadReader ModeInfo m => String -> [Expr Prim] -> m (Expr Prim)
 applyToStd = applyTo stdBuiltins
