@@ -14,25 +14,20 @@ import qualified Data.Calc.Function.Transcendental as Trans
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Control.Monad.Reader
+import Control.Arrow
+
+compileFns :: [Function] -> Map String Function
+compileFns = fmap (fnName &&& id) >>> Map.fromList
 
 stdBuiltins :: Map String Function
-stdBuiltins = Map.fromList [
-            ("sin", Trig.fsin),
-            ("cos", Trig.fcos),
-            ("tan", Trig.ftan),
-            ("asin", Trig.fasin),
-            ("acos", Trig.facos),
-            ("atan", Trig.fatan),
-            ("sinh", Trig.fsinh),
-            ("cosh", Trig.fcosh),
-            ("tanh", Trig.ftanh),
-            ("asinh", Trig.fasinh),
-            ("acosh", Trig.facosh),
-            ("atanh", Trig.fatanh),
-            ("log", functionSynonym "log" "ln"),
-            ("ln", Trans.flog),
-            ("exp", Trans.fexp),
-            ("N", approx)
+stdBuiltins = compileFns [
+            Trig.fsin, Trig.fcos, Trig.ftan,
+            Trig.fasin, Trig.facos, Trig.fatan,
+            Trig.fsinh, Trig.fcosh, Trig.ftanh,
+            Trig.fasinh, Trig.facosh, Trig.fatanh,
+            functionSynonym "log" "ln",
+            Trans.flog, Trans.fexp,
+            approx
            ]
 
 applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
