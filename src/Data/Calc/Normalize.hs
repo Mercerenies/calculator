@@ -135,6 +135,14 @@ flattenSingletons ss = foldr (.) id $ map (pass . go) ss
 flattenStdSingletons :: Monad m => PassT m a a
 flattenStdSingletons = flattenSingletons ["+", "*"]
 
+flattenNullaryOps :: Monad m => [(String, Expr a)] -> PassT m a a
+flattenNullaryOps ss = foldr (.) id $ map (pass . go) ss
+    where go (s, e) (Compound s' []) | s == s' = e
+          go _ x = x
+
+flattenStdNullaryOps :: (Monad m, ReprInteger a) => PassT m a a
+flattenStdNullaryOps = flattenNullaryOps [("+", reprInteger 0), ("*", reprInteger 1)]
+
 sortTermsOf :: (Ord a, Monad m) => [String] -> PassT m a a
 sortTermsOf ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' xs) | str == str' = Compound str' (sort xs)
