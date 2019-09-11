@@ -1,21 +1,28 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE Rank2Types, FlexibleContexts #-}
 
-module Data.Calc.Function.Trigonometry where
+module Data.Calc.Function.Trigonometry(fsin, fcos, ftan, fasin, facos, fatan,
+                                       fsinh, fcosh, ftanh, fasinh, facosh, fatanh) where
 
+import Data.Calc.Expr
 import Data.Calc.Function.Type
 import Data.Calc.Unit.Radians
 
--- ///// Derivatives (don't forget about degree / radian conversions)
+import Control.Applicative
+
+postmultiply :: Monad m => m (Expr a) -> m (Expr a) -> m (Expr a)
+postmultiply = liftA2 (\a b -> Compound "*" [a, b])
 
 fsin :: Function
-fsin = function "sin" f
+fsin = function "sin" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap sin . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "cos" [x]))
 
 fcos :: Function
-fcos = function "cos" f
+fcos = function "cos" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap cos . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [Compound "sin" [x]]))
 
 ftan :: Function
 ftan = function "tan" f

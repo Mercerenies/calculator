@@ -3,6 +3,7 @@
 module Data.Calc.Unit.Radians where
 
 import Data.Calc.Mode
+import Data.Calc.Expr
 
 import Control.Monad.Reader
 
@@ -19,3 +20,12 @@ thetaToRadFactor = asks angularMode >>= \case
 
 radToThetaFactor :: (Floating a, MonadReader ModeInfo m) => m a
 radToThetaFactor = recip <$> thetaToRadFactor
+
+thetaToRadFactorSym :: MonadReader ModeInfo m => m (Expr Prim)
+thetaToRadFactorSym = asks angularMode >>= \case
+                      Radians -> return $ Constant (PrimNum 1)
+                      Degrees -> return $ Compound "/" [Constant (PrimVar "pi"),
+                                                        Constant (PrimNum 180)]
+
+radToThetaFactorSym :: MonadReader ModeInfo m => m (Expr Prim)
+radToThetaFactorSym = (\x -> Compound "/" [Constant (PrimNum 1), x]) <$> thetaToRadFactorSym
