@@ -63,91 +63,252 @@ fcot = function "cot" f `withDeriv` inOneVar f'
                                                          ]))
 
 fasin :: Function
-fasin = function "asin" f
+fasin = function "asin" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . asin)
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "sqrt" [
+                                                           Compound "-" [
+                                                            Constant (PrimNum 1),
+                                                            Compound "^" [x, Constant (PrimNum 2)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 facos :: Function
-facos = function "acos" f
+facos = function "acos" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . acos)
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
+                                                          Compound "/" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "sqrt" [
+                                                            Compound "-" [
+                                                             Constant (PrimNum 1),
+                                                             Compound "^" [x, Constant (PrimNum 2)]
+                                                            ]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 fatan :: Function
-fatan = function "atan" f
+fatan = function "atan" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . atan)
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "+" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "^" [x, Constant (PrimNum 2)]
+                                                          ]
+                                                         ]))
 
 facsc :: Function
-facsc = function "acsc" f
+facsc = function "acsc" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . (asin . recip))
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
+                                                          Compound "/" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "*" [
+                                                            Compound "sqrt" [
+                                                             Compound "-" [
+                                                              Constant (PrimNum 1),
+                                                              Compound "/" [
+                                                               Constant (PrimNum 1),
+                                                               Compound "^" [x, Constant (PrimNum 2)]
+                                                              ]
+                                                             ]
+                                                            ],
+                                                            Compound "^" [x, Constant (PrimNum 2)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 fasec :: Function
-fasec = function "asec" f
+fasec = function "asec" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . (acos . recip))
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "*" [
+                                                           Compound "sqrt" [
+                                                            Compound "-" [
+                                                             Constant (PrimNum 1),
+                                                             Compound "/" [
+                                                              Constant (PrimNum 1),
+                                                              Compound "^" [x, Constant (PrimNum 2)]
+                                                             ]
+                                                            ]
+                                                           ],
+                                                           Compound "^" [x, Constant (PrimNum 2)]
+                                                          ]
+                                                         ]))
 
 facot :: Function
-facot = function "acot" f
+facot = function "acot" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . (atan . recip))
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
+                                                          Compound "/" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "+" [
+                                                            Constant (PrimNum 1),
+                                                            Compound "^" [x, Constant (PrimNum 2)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 fsinh :: Function
-fsinh = function "sinh" f
+fsinh = function "sinh" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap sinh . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "cosh" [x]))
 
 fcosh :: Function
-fcosh = function "cosh" f
+fcosh = function "cosh" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap cosh . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "sinh" [x]))
 
 ftanh :: Function
-ftanh = function "tanh" f
+ftanh = function "tanh" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap tanh . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "^" [Compound "sech" [x],
+                                                                       Constant (PrimNum 2)]))
 
 fcsch :: Function
-fcsch = function "csch" f
+fcsch = function "csch" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap (recip . sinh) . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
+                                                          Compound "*" [Compound "csch" [x],
+                                                                        Compound "coth" [x]]
+                                                         ]))
 
 fsech :: Function
-fsech = function "sech" f
+fsech = function "sech" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap (recip . cosh) . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
+                                                          Compound "*" [Compound "sech" [x],
+                                                                        Compound "tanh" [x]]
+                                                         ]))
 
 fcoth :: Function
-fcoth = function "coth" f
+fcoth = function "coth" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (fmap (recip . tanh) . thetaToRad)
+          f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
+                                                          Compound "^" [Compound "csch" [x],
+                                                                        Constant (PrimNum 2)]
+                                                         ]))
 
 fasinh :: Function
-fasinh = function "asinh" f
+fasinh = function "asinh" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . asinh)
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "sqrt" [
+                                                           Compound "+" [
+                                                            Constant (PrimNum 1),
+                                                            Compound "^" [x, Constant (PrimNum 2)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 facosh :: Function
-facosh = function "acosh" f
+facosh = function "acosh" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . acosh)
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "*" [
+                                                           Compound "sqrt" [
+                                                            Compound "+" [x, Constant (PrimNum 1)]
+                                                           ],
+                                                           Compound "sqrt" [
+                                                            Compound "-" [x, Constant (PrimNum 1)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 fatanh :: Function
-fatanh = function "atanh" f
+fatanh = function "atanh" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . atanh)
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "-" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "^" [x, Constant (PrimNum 2)]
+                                                          ]
+                                                         ]))
 
 facsch :: Function
-facsch = function "acsch" f
+facsch = function "acsch" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . (asinh . recip))
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
+                                                          Compound "/" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "*" [
+                                                            Compound "sqrt" [
+                                                             Compound "+" [
+                                                              Constant (PrimNum 1),
+                                                              Compound "/" [
+                                                               Constant (PrimNum 1),
+                                                               Compound "^" [x, Constant (PrimNum 2)]
+                                                              ]
+                                                             ]
+                                                            ],
+                                                            Compound "^" [x, Constant (PrimNum 2)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 fasech :: Function
-fasech = function "asech" f
+fasech = function "asech" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . (acosh . recip))
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
+                                                          Compound "/" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "*" [
+                                                            Compound "sqrt" [
+                                                             Compound "+" [
+                                                              Compound "/" [
+                                                               Constant (PrimNum 1),
+                                                               x
+                                                              ],
+                                                              Constant (PrimNum 1)
+                                                             ]
+                                                            ],
+                                                            Compound "sqrt" [
+                                                             Compound "-" [
+                                                              Compound "/" [
+                                                               Constant (PrimNum 1),
+                                                               x
+                                                              ],
+                                                              Constant (PrimNum 1)
+                                                             ]
+                                                            ],
+                                                            Compound "^" [x, Constant (PrimNum 2)]
+                                                           ]
+                                                          ]
+                                                         ]))
 
 facoth :: Function
-facoth = function "acoth" f
+facoth = function "acoth" f `withDeriv` inOneVar f'
     where f :: FunctionType
           f = simpleUnaryFn (radToTheta . (atanh . recip))
+          f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
+                                                          Constant (PrimNum 1),
+                                                          Compound "-" [
+                                                           Constant (PrimNum 1),
+                                                           Compound "^" [x, Constant (PrimNum 2)]
+                                                          ]
+                                                         ]))
