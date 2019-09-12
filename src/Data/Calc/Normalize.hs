@@ -11,10 +11,14 @@ import Data.Calc.Mode
 import Data.Calc.Algebra.Factoring
 
 import Prelude hiding ((.), id)
-import Data.List(sort)
+import Data.List(sort, partition)
 import Data.Maybe
 import Data.Monoid
+import Data.Function((&))
+import qualified Data.Map as Map
+import qualified Data.Map.Merge.Lazy as Merge
 import Control.Monad.Reader
+import Control.Arrow
 
 normalizeNegatives :: Monad m => ReprInteger a => PassT m a a
 normalizeNegatives = pass subtractionPass . pass negationPass
@@ -39,10 +43,13 @@ levelStdOperators = levelOperators ["+", "*"]
 
 simplifyRationals :: Monad m => PassT m a a
 simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
-    where rule1 (Compound "/" [Compound "/" [a, b], c]) = Compound "/" [a, Compound "*" [b, c]]
+    where -- (a/b)/c ==> a/(bc)
+          rule1 (Compound "/" [Compound "/" [a, b], c]) = Compound "/" [a, Compound "*" [b, c]]
           rule1 x = x
+          -- a/(b/c) ==> (ac)/b
           rule2 (Compound "/" [a, Compound "/" [b, c]]) = Compound "/" [Compound "*" [a, c], b]
           rule2 x = x
+          -- a(b/c)d ==> (abd)/c
           rule3 (Compound "*" xs)
               | any isDivision xs =
                   let numerator = map extractNum xs
@@ -59,20 +66,18 @@ simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
 collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                       PassT m a a
 collectLikeFactors = pass collect
-    where collect (Compound "*" xs) = Compound "*" (collectTerms match coalesce xs)
-          -- TODO Coalesce (y / y^2) and similar terms with division operator
+    where collect (Compound "*" xs) = simply "*" (collectTerms match coalesce xs)
           collect x = x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "^" [Constant a, Constant b]) | isVar a = Just (a, Constant b)
           match _ = Nothing
           coalesce a [x] | x == Constant (reprInteger 1) = Constant a
-          coalesce a [x] = Compound "^" [Constant a, x]
-          coalesce a es = Compound "^" [Constant a, Compound "+" es]
+          coalesce a es = Compound "^" [Constant a, simply "+" es]
 
 collectLikeTerms :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                     PassT m a a
 collectLikeTerms = pass collect
-    where collect (Compound "+" xs) = Compound "+" (collectTerms match coalesce xs)
+    where collect (Compound "+" xs) = simply "+" (collectTerms match coalesce xs)
           collect x = x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "*" [Constant a, Constant b])
@@ -80,8 +85,40 @@ collectLikeTerms = pass collect
               | isVar b && isNumber a = Just (b, Constant a)
           match _ = Nothing
           coalesce a [x] | x == Constant (reprInteger 1) = Constant a
-          coalesce a [x] = Compound "*" [x, Constant a]
-          coalesce a es = Compound "*" [Compound "+" es, Constant a]
+          coalesce a es = Compound "*" [simply "+" es, Constant a]
+
+collectFactorsFromDenom :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
+                           PassT m a a
+collectFactorsFromDenom = pass collect
+    where collect (Compound "/" [a, b]) =
+              let as = fromProduct a
+                  bs = fromProduct b
+                  (nums, mnum) = accumulateTerms match as
+                  (dens, mden) = accumulateTerms match bs
+                  result = Merge.merge numOnly denOnly numDen mnum mden
+                  (newnum, newden) = Map.toList result &
+                                     partition (\(_, (_, fb)) -> fb == Numerator) &
+                                     (map (\(k, (v, _)) -> (k, v)) *** map (\(k, (v, _)) -> (k, v)))
+                  finalnum = nums ++ map (uncurry coalesce) newnum
+                  finalden = dens ++ map (uncurry coalesce) newden
+              in Compound "/" [simply "*" finalnum, simply "*" finalden]
+          collect x = x
+          fromProduct (Compound "*" xs) = xs
+          fromProduct x = [x]
+          match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
+          match (Compound "^" [Constant a, Constant b]) | isVar a = Just (a, Constant b)
+          match _ = Nothing
+          coalesce a [x] | x == Constant (reprInteger 1) = Constant a
+          coalesce a [x] = Compound "^" [Constant a, x]
+          coalesce a es = Compound "^" [Constant a, Compound "+" es]
+          classifyExponent [Constant x] | isNegative x = ([Compound "_" [Constant x]], Denominator)
+          classifyExponent [y] = ([y], Numerator)
+          classifyExponent ys = (ys, Numerator)
+          numOnly = Merge.mapMissing $ \_ xs -> second (Numerator   <>) $ classifyExponent xs
+          denOnly = Merge.mapMissing $ \_ ys -> second (Denominator <>) $ classifyExponent ys
+          numDen  = Merge.zipWithMatched $ \_ xs ys -> ([Compound "-" [Compound "+" xs,
+                                                                       Compound "+" ys]],
+                                                        Numerator)
 
 -- TODO I'd like to generalize this to take Pass a a for appropriately typeclassed a.
 foldConstants :: Monad m => PassT m Prim Prim

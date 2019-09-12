@@ -8,10 +8,14 @@ import Data.Calc.Util
 import Control.Monad.State
 import Data.Map(Map)
 import qualified Data.Map as Map
+import Data.Semigroup
 
 type MatchFunction a = Expr a -> Maybe (a, Expr a)
 
 type CoalesceFunction a = a -> [Expr a] -> Expr a
+
+data FractionBar = Denominator | Numerator
+                   deriving (Show, Read, Eq, Ord, Bounded, Enum)
 
 matchStateful :: (Ord a, MonadState (Map a [Expr a]) m) => MatchFunction a -> Expr a -> m [Expr a]
 matchStateful match x
@@ -25,3 +29,15 @@ collectTerms :: Ord a => MatchFunction a -> CoalesceFunction a -> [Expr a] -> [E
 collectTerms match coalesce xs = leftover ++ map coalesce' (Map.toList matched)
     where (leftover, matched) = accumulateTerms match xs
           coalesce' = uncurry coalesce
+
+instance Semigroup FractionBar where
+    Denominator <> _ = Denominator
+    Numerator   <> x = x
+
+instance Monoid FractionBar where
+    mempty = Numerator
+    mappend = (<>)
+
+simply :: String -> [Expr a] -> Expr a
+simply _ [x] = x
+simply s xs  = Compound s xs

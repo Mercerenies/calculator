@@ -23,3 +23,5 @@ class HasVars a where
 
 class HasNumbers a where
     isNumber :: a -> Bool
+    isPositive :: a -> Bool
+    isNegative :: a -> Bool

@@ -40,6 +40,10 @@ instance HasVars Prim where
 instance HasNumbers Prim where
     isNumber (PrimNum {}) = True
     isNumber _ = False
+    isPositive (PrimNum a) | a `cmp` 0 == Just GT = True
+    isPositive _ = False
+    isNegative (PrimNum a) | a `cmp` 0 == Just LT = True
+    isNegative _ = False
 
 isConstant :: Expr a -> Bool
 isConstant (Constant {}) = True
