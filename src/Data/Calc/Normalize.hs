@@ -61,15 +61,18 @@ simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
 collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                       PassT m a a
 collectLikeFactors = pass collect
-    where collect (Compound "*" xs) = let (res, m) = runState (concat <$> mapM match xs) Map.empty
-                                      in Compound "*" (res ++ (map coalesce $ Map.toList m))
+    where collect (Compound "*" xs) =
+              let (res, m) = runState (concat <$> mapM matchState xs) Map.empty
+              in Compound "*" (res ++ (map coalesce $ Map.toList m))
           -- TODO Coalesce (y / y^2) and similar terms with division operator
           collect x = x
-          match :: Expr a -> State (Map a [Expr a]) [Expr a]
-          match (Constant a) | isVar a = [] <$ modify (mappendMap a [Constant (reprInteger 1)])
-          match (Compound "^" [Constant a, Constant b])
-              | isVar a && isNumber b = [] <$ modify (mappendMap a [Constant b])
-          match x = pure [x]
+          match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
+          match (Compound "^" [Constant a, Constant b]) | isVar a = Just (a, Constant b)
+          match _ = Nothing
+          matchState :: Expr a -> State (Map a [Expr a]) [Expr a]
+          matchState x
+              | Just (b, e) <- match x = [] <$ modify (mappendMap b [e])
+              | otherwise = pure [x]
           coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
           coalesce (a, [x]) = Compound "^" [Constant a, x]
           coalesce (a, es) = Compound "^" [Constant a, Compound "+" es]
@@ -77,16 +80,19 @@ collectLikeFactors = pass collect
 collectLikeTerms :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                     PassT m a a
 collectLikeTerms = pass collect
-    where collect (Compound "+" xs) = let (res, m) = runState (concat <$> mapM match xs) Map.empty
-                                      in Compound "+" (res ++ (map coalesce $ Map.toList m))
+    where collect (Compound "+" xs) =
+              let (res, m) = runState (concat <$> mapM matchState xs) Map.empty
+              in Compound "+" (res ++ (map coalesce $ Map.toList m))
           collect x = x
-          match :: Expr a -> State (Map a [Expr a]) [Expr a]
-          match (Constant a) | isVar a = [] <$ modify (mappendMap a [Constant (reprInteger 1)])
+          match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "*" [Constant a, Constant b])
-              | isVar a && isNumber b = [] <$ modify (mappendMap a [Constant b])
-          match (Compound "*" [Constant a, Constant b])
-              | isVar b && isNumber a = [] <$ modify (mappendMap b [Constant a])
-          match x = pure [x]
+              | isVar a && isNumber b = Just (a, Constant b)
+              | isVar b && isNumber a = Just (b, Constant a)
+          match _ = Nothing
+          matchState :: Expr a -> State (Map a [Expr a]) [Expr a]
+          matchState x
+              | Just (b, e) <- match x = [] <$ modify (mappendMap b [e])
+              | otherwise = pure [x]
           coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
           coalesce (a, [x]) = Compound "*" [x, Constant a]
           coalesce (a, es) = Compound "*" [Compound "+" es, Constant a]
