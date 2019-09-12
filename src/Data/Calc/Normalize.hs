@@ -13,8 +13,6 @@ import Data.Calc.Algebra.Factoring
 import Prelude hiding ((.), id)
 import Data.List(sort)
 import Data.Maybe
---import Data.Map(Map)
-import qualified Data.Map as Map
 import Data.Monoid
 import Control.Monad.Reader
 
@@ -61,33 +59,29 @@ simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
 collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                       PassT m a a
 collectLikeFactors = pass collect
-    where collect (Compound "*" xs) =
-              let (res, m) = accumulateTerms match xs
-              in Compound "*" (res ++ (map coalesce $ Map.toList m))
+    where collect (Compound "*" xs) = Compound "*" (collectTerms match coalesce xs)
           -- TODO Coalesce (y / y^2) and similar terms with division operator
           collect x = x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "^" [Constant a, Constant b]) | isVar a = Just (a, Constant b)
           match _ = Nothing
-          coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
-          coalesce (a, [x]) = Compound "^" [Constant a, x]
-          coalesce (a, es) = Compound "^" [Constant a, Compound "+" es]
+          coalesce a [x] | x == Constant (reprInteger 1) = Constant a
+          coalesce a [x] = Compound "^" [Constant a, x]
+          coalesce a es = Compound "^" [Constant a, Compound "+" es]
 
 collectLikeTerms :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                     PassT m a a
 collectLikeTerms = pass collect
-    where collect (Compound "+" xs) =
-              let (res, m) = accumulateTerms match xs
-              in Compound "+" (res ++ (map coalesce $ Map.toList m))
+    where collect (Compound "+" xs) = Compound "+" (collectTerms match coalesce xs)
           collect x = x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "*" [Constant a, Constant b])
               | isVar a && isNumber b = Just (a, Constant b)
               | isVar b && isNumber a = Just (b, Constant a)
           match _ = Nothing
-          coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
-          coalesce (a, [x]) = Compound "*" [x, Constant a]
-          coalesce (a, es) = Compound "*" [Compound "+" es, Constant a]
+          coalesce a [x] | x == Constant (reprInteger 1) = Constant a
+          coalesce a [x] = Compound "*" [x, Constant a]
+          coalesce a es = Compound "*" [Compound "+" es, Constant a]
 
 -- TODO I'd like to generalize this to take Pass a a for appropriately typeclassed a.
 foldConstants :: Monad m => PassT m Prim Prim
