@@ -8,14 +8,14 @@ import Data.Calc.Repr
 import Data.Calc.Util
 import Data.Calc.Function
 import Data.Calc.Mode
+import Data.Calc.Algebra.Factoring
 
 import Prelude hiding ((.), id)
 import Data.List(sort)
 import Data.Maybe
-import Data.Map(Map)
+--import Data.Map(Map)
 import qualified Data.Map as Map
 import Data.Monoid
-import Control.Monad.State
 import Control.Monad.Reader
 
 normalizeNegatives :: Monad m => ReprInteger a => PassT m a a
@@ -62,17 +62,13 @@ collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a
                       PassT m a a
 collectLikeFactors = pass collect
     where collect (Compound "*" xs) =
-              let (res, m) = runState (concat <$> mapM matchState xs) Map.empty
+              let (res, m) = accumulateTerms match xs
               in Compound "*" (res ++ (map coalesce $ Map.toList m))
           -- TODO Coalesce (y / y^2) and similar terms with division operator
           collect x = x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "^" [Constant a, Constant b]) | isVar a = Just (a, Constant b)
           match _ = Nothing
-          matchState :: Expr a -> State (Map a [Expr a]) [Expr a]
-          matchState x
-              | Just (b, e) <- match x = [] <$ modify (mappendMap b [e])
-              | otherwise = pure [x]
           coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
           coalesce (a, [x]) = Compound "^" [Constant a, x]
           coalesce (a, es) = Compound "^" [Constant a, Compound "+" es]
@@ -81,7 +77,7 @@ collectLikeTerms :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, 
                     PassT m a a
 collectLikeTerms = pass collect
     where collect (Compound "+" xs) =
-              let (res, m) = runState (concat <$> mapM matchState xs) Map.empty
+              let (res, m) = accumulateTerms match xs
               in Compound "+" (res ++ (map coalesce $ Map.toList m))
           collect x = x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
@@ -89,10 +85,6 @@ collectLikeTerms = pass collect
               | isVar a && isNumber b = Just (a, Constant b)
               | isVar b && isNumber a = Just (b, Constant a)
           match _ = Nothing
-          matchState :: Expr a -> State (Map a [Expr a]) [Expr a]
-          matchState x
-              | Just (b, e) <- match x = [] <$ modify (mappendMap b [e])
-              | otherwise = pure [x]
           coalesce (a, [x]) | x == Constant (reprInteger 1) = Constant a
           coalesce (a, [x]) = Compound "*" [x, Constant a]
           coalesce (a, es) = Compound "*" [Compound "+" es, Constant a]
