@@ -20,7 +20,8 @@ stdOps = Map.fromList [
           ("*", Op " * " 7 LeftAssoc Infix),
           ("/", Op " / " 7 LeftAssoc Infix),
           ("^", Op "^" 8 RightAssoc Infix),
-          ("_", Op "-" 6 LeftAssoc Prefix)
+          ("_", Op "-" 6 LeftAssoc Prefix),
+          ("fact", Op "!" 9 RightAssoc Postfix)
          ]
 
 getStdOp :: String -> Maybe Op

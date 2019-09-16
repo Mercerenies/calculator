@@ -2,7 +2,7 @@
 
 module Data.Calc.Function.Type(FunctionType, Function(..), functionSynonym, function,
                                withDeriv, inOneVar,
-                               simpleUnaryFn) where
+                               simpleUnaryFn, simpleBinaryFn) where
 
 import Data.Calc.Expr
 import Data.Calc.Mode
@@ -40,3 +40,8 @@ simpleUnaryFn :: (forall m. MonadReader ModeInfo m => Number -> m Number) ->
                  (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim)))
 simpleUnaryFn fn [Constant (PrimNum a)] = (Just . Constant . PrimNum) <$> fn a
 simpleUnaryFn _ _ = pure Nothing
+
+simpleBinaryFn :: (forall m. MonadReader ModeInfo m => Number -> Number -> m Number) ->
+                  (forall m. MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim)))
+simpleBinaryFn fn [Constant (PrimNum a), Constant (PrimNum b)] = (Just . Constant . PrimNum) <$> fn a b
+simpleBinaryFn _ _ = pure Nothing
