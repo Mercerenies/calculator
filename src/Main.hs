@@ -49,7 +49,7 @@ example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
 myPass :: MonadReader ModeInfo m => PassT m Prim Prim
-myPass = sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions . foldConstants . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+myPass = sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
 main = forever $ do

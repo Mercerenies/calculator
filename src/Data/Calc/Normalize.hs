@@ -120,6 +120,12 @@ collectFactorsFromDenom = pass collect
                                                                        Compound "+" ys]],
                                                         Numerator)
 
+flattenNestedExponents :: Monad m => PassT m a a
+flattenNestedExponents = pass go
+    where go (Compound "^" [Compound "^" [a, b], c]) =
+              Compound "^" [a, Compound "*" [b, c]]
+          go x = x
+
 -- TODO I'd like to generalize this to take Pass a a for appropriately typeclassed a.
 foldConstants :: Monad m => PassT m Prim Prim
 foldConstants = pass eval
