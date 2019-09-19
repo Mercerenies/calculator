@@ -193,5 +193,9 @@ promoteRatios = pass go
     where go (Constant (PrimNum (NRatio a))) = Constant (PrimNum (NDouble $ fromRational a))
           go x = x
 
---promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
---promoteRatiosMaybe = fromKleisli $ proc 
+promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
+promoteRatiosMaybe = fromKleisli $ proc x -> do
+                       y <- Kleisli asks -< exactnessMode
+                       if y <= Floating
+                       then toKleisli promoteRatios -< x
+                       else returnA -< x
