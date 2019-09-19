@@ -4,6 +4,7 @@ module Data.Calc.Function.Type(FunctionType, Function(..), applyTo,
                                functionSynonym, function,
                                withDeriv, inOneVar,
                                simpleUnaryFn, simpleBinaryFn,
+                               alwaysInexact,
                                appFn) where
 
 import Data.Calc.Expr
@@ -58,6 +59,12 @@ simpleBinaryFn :: Monad m => (Number -> Number -> m Number) -> FunctionType m
 simpleBinaryFn fn = do
   [Constant (PrimNum a), Constant (PrimNum b)] <- ask
   Constant . PrimNum <$> (lift . lift $ fn a b)
+
+alwaysInexact :: (MonadReader ModeInfo m, MonadPlus m) => m a -> m a
+alwaysInexact m = do
+  exactness <- asks exactnessMode
+  guard (exactness < Symbolic)
+  m
 
 appFn :: FunctionMonad m a -> [Expr Prim] -> m (Maybe a)
 appFn fn exprs = exprs & runReaderT fn & runMaybeT

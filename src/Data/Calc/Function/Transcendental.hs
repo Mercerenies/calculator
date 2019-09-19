@@ -5,27 +5,42 @@ module Data.Calc.Function.Transcendental where
 import Data.Calc.Function.Type
 import Data.Calc.Expr
 import Data.Calc.Number
+import Data.Calc.Mode
 
 import Data.Ratio
 import Control.Monad.Reader
+import Control.Monad.Morph
 
-flog :: Monad m => Function m
+flog :: MonadReader ModeInfo m => Function m
 flog = function "ln" f `withDeriv` inOneVar (\x -> pure $ Compound "/" [Constant (PrimNum 1), x])
-    where f = do
+    where f = hoist alwaysInexact $ do
             [Constant (PrimNum x)] <- ask
             return . Constant . PrimNum $ log x
 
-fexp :: Monad m => Function m
+fexp :: MonadReader ModeInfo m => Function m
 fexp = function "exp" f `withDeriv` inOneVar (\x -> pure $ Compound "exp" [x])
-    where f = do
+    where f = hoist alwaysInexact $ do
             [Constant (PrimNum x)] <- ask
             return . Constant . PrimNum $ exp x
 
-fsqrt :: Monad m => Function m
+fsqrt :: MonadReader ModeInfo m => Function m
 fsqrt = function "sqrt" f `withDeriv` inOneVar (\x -> pure $ Compound "/" [
                                                        Constant (PrimNum (NRatio $ 1 % 2)),
                                                        Compound "sqrt" [x]
                                                       ])
     where f = do
             [Constant (PrimNum x)] <- ask
-            return . Constant . PrimNum $ sqrt x
+            result <-
+                case x of
+                  NRatio a
+                      | n <- numerator a
+                      , d <- denominator a
+                      , n' <- fromInteger n :: Double
+                      , d' <- fromInteger d :: Double
+                      , isPerfectSquare n && isPerfectSquare d ->
+                          return . NRatio $ round (sqrt n') % round (sqrt d')
+                  a -> hoist alwaysInexact . return $ sqrt a
+            return . Constant . PrimNum $ result
+          isPerfectSquare n =
+              let m = fromInteger n ** 0.5 :: Double
+              in m == fromInteger (round m)

@@ -15,10 +15,20 @@
 ** Sept 18, 2019
  + [ ] There may still be some neatening (~mmorph~ style) to be done
    with the FunctionType transition
- + [-] Symbolic mode
+ + [X] Symbolic mode
    - [X] Get rid of fractions if in floating mode
    - [X] Make ~Normalize.hs~ not depend on ~Function.hs~
-   - [ ] If in symbolic mode, hold calculations
+   - [X] If in symbolic mode, hold calculations
    - [X] Run usual passes into N(...) but forcing into floating mode
  + [X] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
  + [X] Command line args for mode
+ + [ ] Trig simplification step
+   - The usual trig functions will refuse to evaluate if in symbolic
+     mode
+   - [ ] Write a simplification that solves any "known" trig function
+     values exactly
+   - [ ] Inverse trig functions as well
+   - [ ] Solver for transcendentals as well
+   - [ ] Powers?
+   - [ ] Powers need to not evaluate if they'll produce a floating
+     result out of rationals

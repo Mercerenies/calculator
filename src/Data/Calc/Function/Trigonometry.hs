@@ -16,29 +16,30 @@ import Data.Calc.Unit.Radians
 
 import Control.Applicative
 import Control.Monad.Reader
+import Control.Monad.Morph
 
 postmultiply :: Monad m => m (Expr a) -> m (Expr a) -> m (Expr a)
 postmultiply = liftA2 (\a b -> Compound "*" [a, b])
 
 fsin :: MonadReader ModeInfo m => Function m
 fsin = function "sin" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap sin . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap sin . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "cos" [x]))
 
 fcos :: MonadReader ModeInfo m => Function m
 fcos = function "cos" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap cos . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap cos . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [Compound "sin" [x]]))
 
 ftan :: MonadReader ModeInfo m => Function m
 ftan = function "tan" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap tan . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap tan . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "^" [Compound "sec" [x],
                                                                        Constant (PrimNum 2)]))
 
 fcsc :: MonadReader ModeInfo m => Function m
 fcsc = function "csc" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap (recip . sin) . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap (recip . sin) . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
                                                           Compound "*" [Compound "csc" [x],
                                                                         Compound "cot" [x]]
@@ -46,13 +47,13 @@ fcsc = function "csc" f `withDeriv` inOneVar f'
 
 fsec :: MonadReader ModeInfo m => Function m
 fsec = function "sec" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap (recip . cos) . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap (recip . cos) . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "*" [Compound "csc" [x],
                                                                        Compound "cot" [x]]))
 
 fcot :: MonadReader ModeInfo m => Function m
 fcot = function "cot" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap (recip . tan) . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap (recip . tan) . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
                                                           Compound "^" [Compound "csc" [x],
                                                                         Constant (PrimNum 2)]
@@ -60,7 +61,7 @@ fcot = function "cot" f `withDeriv` inOneVar f'
 
 fasin :: MonadReader ModeInfo m => Function m
 fasin = function "asin" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . asin)
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . asin)
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "sqrt" [
@@ -73,7 +74,7 @@ fasin = function "asin" f `withDeriv` inOneVar f'
 
 facos :: MonadReader ModeInfo m => Function m
 facos = function "acos" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . acos)
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . acos)
           f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
                                                           Compound "/" [
                                                            Constant (PrimNum 1),
@@ -88,7 +89,7 @@ facos = function "acos" f `withDeriv` inOneVar f'
 
 fatan :: MonadReader ModeInfo m => Function m
 fatan = function "atan" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . atan)
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . atan)
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "+" [
@@ -99,7 +100,7 @@ fatan = function "atan" f `withDeriv` inOneVar f'
 
 facsc :: MonadReader ModeInfo m => Function m
 facsc = function "acsc" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . (asin . recip))
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . (asin . recip))
           f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
                                                           Compound "/" [
                                                            Constant (PrimNum 1),
@@ -120,7 +121,7 @@ facsc = function "acsc" f `withDeriv` inOneVar f'
 
 fasec :: MonadReader ModeInfo m => Function m
 fasec = function "asec" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . (acos . recip))
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . (acos . recip))
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "*" [
@@ -139,7 +140,7 @@ fasec = function "asec" f `withDeriv` inOneVar f'
 
 facot :: MonadReader ModeInfo m => Function m
 facot = function "acot" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . (atan . recip))
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . (atan . recip))
           f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
                                                           Compound "/" [
                                                            Constant (PrimNum 1),
@@ -152,23 +153,23 @@ facot = function "acot" f `withDeriv` inOneVar f'
 
 fsinh :: MonadReader ModeInfo m => Function m
 fsinh = function "sinh" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap sinh . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap sinh . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "cosh" [x]))
 
 fcosh :: MonadReader ModeInfo m => Function m
 fcosh = function "cosh" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap cosh . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap cosh . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "sinh" [x]))
 
 ftanh :: MonadReader ModeInfo m => Function m
 ftanh = function "tanh" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap tanh . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap tanh . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "^" [Compound "sech" [x],
                                                                        Constant (PrimNum 2)]))
 
 fcsch :: MonadReader ModeInfo m => Function m
 fcsch = function "csch" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap (recip . sinh) . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap (recip . sinh) . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
                                                           Compound "*" [Compound "csch" [x],
                                                                         Compound "coth" [x]]
@@ -176,7 +177,7 @@ fcsch = function "csch" f `withDeriv` inOneVar f'
 
 fsech :: MonadReader ModeInfo m => Function m
 fsech = function "sech" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap (recip . cosh) . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap (recip . cosh) . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
                                                           Compound "*" [Compound "sech" [x],
                                                                         Compound "tanh" [x]]
@@ -184,7 +185,7 @@ fsech = function "sech" f `withDeriv` inOneVar f'
 
 fcoth :: MonadReader ModeInfo m => Function m
 fcoth = function "coth" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (fmap (recip . tanh) . thetaToRad)
+    where f = hoist alwaysInexact $ simpleUnaryFn (fmap (recip . tanh) . thetaToRad)
           f' x = postmultiply thetaToRadFactorSym (pure (Compound "_" [
                                                           Compound "^" [Compound "csch" [x],
                                                                         Constant (PrimNum 2)]
@@ -192,7 +193,7 @@ fcoth = function "coth" f `withDeriv` inOneVar f'
 
 fasinh :: MonadReader ModeInfo m => Function m
 fasinh = function "asinh" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . asinh)
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . asinh)
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "sqrt" [
@@ -205,7 +206,7 @@ fasinh = function "asinh" f `withDeriv` inOneVar f'
 
 facosh :: MonadReader ModeInfo m => Function m
 facosh = function "acosh" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . acosh)
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . acosh)
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "*" [
@@ -220,7 +221,7 @@ facosh = function "acosh" f `withDeriv` inOneVar f'
 
 fatanh :: MonadReader ModeInfo m => Function m
 fatanh = function "atanh" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . atanh)
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . atanh)
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "-" [
@@ -231,7 +232,7 @@ fatanh = function "atanh" f `withDeriv` inOneVar f'
 
 facsch :: MonadReader ModeInfo m => Function m
 facsch = function "acsch" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . (asinh . recip))
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . (asinh . recip))
           f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
                                                           Compound "/" [
                                                            Constant (PrimNum 1),
@@ -252,7 +253,7 @@ facsch = function "acsch" f `withDeriv` inOneVar f'
 
 fasech :: MonadReader ModeInfo m => Function m
 fasech = function "asech" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . (acosh . recip))
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . (acosh . recip))
           f' x = postmultiply radToThetaFactorSym (pure (Compound "_" [
                                                           Compound "/" [
                                                            Constant (PrimNum 1),
@@ -282,7 +283,7 @@ fasech = function "asech" f `withDeriv` inOneVar f'
 
 facoth :: MonadReader ModeInfo m => Function m
 facoth = function "acoth" f `withDeriv` inOneVar f'
-    where f = simpleUnaryFn (radToTheta . (atanh . recip))
+    where f = hoist alwaysInexact $ simpleUnaryFn (radToTheta . (atanh . recip))
           f' x = postmultiply radToThetaFactorSym (pure (Compound "/" [
                                                           Constant (PrimNum 1),
                                                           Compound "-" [
