@@ -14,3 +14,8 @@
  + [X] m (Maybe ...) -> MaybeT m ... in FunctionType
  + [ ] There may still be some neatening (~mmorph~ style) to be done
    with the FunctionType transition
+ + [ ] Symbolic mode
+   - [ ] Get rid of fractions if in floating mode
+   - [ ] Make ~Normalize.hs~ not depend on ~Function.hs~
+   - [ ] If in symbolic mode, hold calculations
+   - [ ] Run usual passes into N(...) but forcing into floating mode

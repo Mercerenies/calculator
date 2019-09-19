@@ -17,10 +17,6 @@ type FunctionMonad m = ReaderT [Expr Prim] (MaybeT m)
 
 type FunctionType m = FunctionMonad m (Expr Prim)
 
---type DerivativeType = (forall m. MonadReader ModeInfo m =>
---                       (Expr Prim -> m (Expr Prim)) ->
---                       [Expr Prim] -> m (Maybe (Expr Prim)))
-
 data Function m = Function {
       fnName :: String,
       fnImpl :: FunctionType m,

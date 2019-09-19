@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts, Arrows #-}
 
 module Data.Calc.Normalize where
 
@@ -8,6 +8,7 @@ import Data.Calc.Repr
 import Data.Calc.Util
 import Data.Calc.Function
 import Data.Calc.Mode
+import Data.Calc.Number
 import Data.Calc.Algebra.Factoring
 
 import Prelude hiding ((.), id)
@@ -186,3 +187,11 @@ sortTermsOf ss = foldr (.) id $ map (pass . go) ss
 
 sortTermsOfStd :: (Ord a, Monad m) => PassT m a a
 sortTermsOfStd = sortTermsOf ["+", "*"]
+
+promoteRatios :: Monad m => PassT m Prim Prim
+promoteRatios = pass go
+    where go (Constant (PrimNum (NRatio a))) = Constant (PrimNum (NDouble $ fromRational a))
+          go x = x
+
+--promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
+--promoteRatiosMaybe = fromKleisli $ proc 

@@ -2,13 +2,18 @@
 module Data.Calc.Mode where
 
 data ModeInfo = ModeInfo {
-      angularMode :: AngularMode
+      angularMode :: AngularMode,
+      exactnessMode :: ExactnessMode
     } deriving (Show, Read, Eq)
 
 data AngularMode = Radians | Degrees
                    deriving (Show, Read, Eq, Ord, Enum)
 
+data ExactnessMode = Symbolic | Fractional | Floating
+                     deriving (Show, Read, Eq, Ord, Enum)
+
 defaultMode :: ModeInfo
 defaultMode = ModeInfo {
-                angularMode = Radians
+                angularMode = Radians,
+                exactnessMode = Fractional
               }

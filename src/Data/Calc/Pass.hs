@@ -5,13 +5,15 @@ module Data.Calc.Pass(PassT(..), Pass, pass,
                       runPassOnceTDM, runPassOnceBUM, runPassOnceFullM,
                       runPassOnceTD, runPassOnceBU, runPassOnceFull,
                       runPassTDM, runPassBUM, runPassFullM,
-                      runPassTD, runPassBU, runPassFull) where
+                      runPassTD, runPassBU, runPassFull,
+                      fromKleisli) where
 
 import Data.Calc.Expr
 import Data.Calc.Util
 
 import Prelude hiding (id, (.))
 import Control.Category
+import Control.Arrow
 import Control.Monad
 import Data.Functor.Identity
 import Data.Profunctor
@@ -75,3 +77,6 @@ runPassBU p = runIdentity . runPassBUM p
 
 runPassFull :: Eq a => Pass a a -> Expr a -> Expr a
 runPassFull p = runIdentity . runPassFullM p
+
+fromKleisli :: Monad m => Kleisli m (Expr a) (Expr b) -> PassT m a b
+fromKleisli (Kleisli f) = PassT f
