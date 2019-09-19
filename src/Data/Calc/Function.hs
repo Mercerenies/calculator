@@ -33,7 +33,7 @@ stdBuiltins = compileFns [
             Trig.facsch, Trig.fasech, Trig.facoth,
             functionSynonym "log" "ln",
             Trans.flog, Trans.fexp, Trans.fsqrt,
-            Comb.ffact, Comb.fncr,
+            Comb.ffact, Comb.fdfact, Comb.fncr, Comb.fnpr, Comb.fgcd, Comb.flcm,
             approx,
             derivativeFn stdBuiltins
            ]
