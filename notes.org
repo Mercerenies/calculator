@@ -21,3 +21,4 @@
    - [ ] If in symbolic mode, hold calculations
    - [ ] Run usual passes into N(...) but forcing into floating mode
  + [ ] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
+ + [X] Command line args for mode

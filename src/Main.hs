@@ -15,10 +15,12 @@ import Data.Calc.Pass
 import Data.Calc.Normalize
 import Data.Calc.Parse
 import Data.Calc.Mode
+import System.CmdArgs
 
 import Control.Monad
 import Control.Monad.Reader
 import System.IO
+import System.Environment
 import Prelude hiding ((.), id)
 
 -- (+ 3 (- 2 1) 4 (* 2 z) z (* z 3) (* x y (^ x 2)) (_ (* 2 9)))
@@ -52,14 +54,16 @@ myPass :: MonadReader ModeInfo m => PassT m Prim Prim
 myPass = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
-main = forever $ do
+main = do
+  (mode, _) <- getArgs >>= parseArgv'
+  forever $ do
          putStr "> "
          hFlush stdout
          line <- getLine
          case parseExpr "(stdin)" line of
            Left err -> print err
            Right expr -> do
-                   let expr' = runReader (runPassTDM myPass expr) defaultMode
+                   let expr' = runReader (runPassTDM myPass expr) mode
                    putStrLn $ lispLikeShow expr
                    putStrLn $ formulaShow expr
                    putStrLn $ lispLikeShow expr'
