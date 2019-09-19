@@ -15,6 +15,7 @@ import Data.Calc.Pass
 import Data.Calc.Normalize
 import Data.Calc.Parse
 import Data.Calc.Mode
+import Data.Calc.Function
 import System.CmdArgs
 
 import Control.Monad
@@ -51,7 +52,7 @@ example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
 myPass :: MonadReader ModeInfo m => PassT m Prim Prim
-myPass = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+myPass = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions stdBuiltins . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 main :: IO ()
 main = do
@@ -68,8 +69,3 @@ main = do
                    putStrLn $ formulaShow expr
                    putStrLn $ lispLikeShow expr'
                    putStrLn $ formulaShow expr'
-
---  let pass = myPass
---  putStrLn "Hello :)"
---  putStrLn $ formulaShow (runPassTD pass $ example)
---  putStrLn $ lispLikeShow (runPassTD pass $ example)

@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, LambdaCase #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Data.Calc.Function(Function(..), functionSynonym,
                           stdBuiltins,
@@ -37,13 +37,6 @@ stdBuiltins = compileFns [
             approx,
             derivativeFn stdBuiltins
            ]
-
-applyTo :: MonadReader ModeInfo m => Map String (Function m) -> String -> [Expr Prim] -> m (Expr Prim)
-applyTo m s args = case Map.lookup s m of
-                     Nothing  -> pure $ Compound s args
-                     Just (Function { fnImpl = fn }) -> fn `appFn` args >>= \case
-                                                        Nothing -> pure (Compound s args)
-                                                        Just x  -> pure x
 
 applyToStd :: MonadReader ModeInfo m => String -> [Expr Prim] -> m (Expr Prim)
 applyToStd = applyTo stdBuiltins

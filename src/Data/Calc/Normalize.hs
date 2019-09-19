@@ -6,7 +6,7 @@ import Data.Calc.Expr
 import Data.Calc.Pass
 import Data.Calc.Repr
 import Data.Calc.Util
-import Data.Calc.Function
+import Data.Calc.Function.Type
 import Data.Calc.Mode
 import Data.Calc.Number
 import Data.Calc.Algebra.Factoring
@@ -16,6 +16,7 @@ import Data.List(sort, partition)
 import Data.Maybe
 import Data.Monoid
 import Data.Function((&))
+import Data.Map(Map)
 import qualified Data.Map as Map
 import qualified Data.Map.Merge.Lazy as Merge
 import Control.Monad.Reader
@@ -159,9 +160,9 @@ foldConstants = pass eval
           coerceToNum _ = Nothing
 
 -- TODO Generalize this to be typeclassed like above.
-evalFunctions :: MonadReader ModeInfo m => PassT m Prim Prim
-evalFunctions = PassT eval
-    where eval (Compound h xs) = applyToStd h xs
+evalFunctions :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+evalFunctions builtins = PassT eval
+    where eval (Compound h xs) = applyTo builtins h xs
           eval x = pure x
 
 flattenSingletons :: Monad m => [String] -> PassT m a a

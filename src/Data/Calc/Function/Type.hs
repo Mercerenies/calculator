@@ -1,17 +1,20 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase #-}
 
-module Data.Calc.Function.Type(FunctionType, Function(..), functionSynonym, function,
+module Data.Calc.Function.Type(FunctionType, Function(..), applyTo,
+                               functionSynonym, function,
                                withDeriv, inOneVar,
                                simpleUnaryFn, simpleBinaryFn,
                                appFn) where
 
 import Data.Calc.Expr
---import Data.Calc.Mode
+import Data.Calc.Mode
 import Data.Calc.Number
 
 import Control.Monad.Reader
 import Control.Monad.Trans.Maybe
 import Data.Function
+import Data.Map(Map)
+import qualified Data.Map as Map
 
 type FunctionMonad m = ReaderT [Expr Prim] (MaybeT m)
 
@@ -22,6 +25,13 @@ data Function m = Function {
       fnImpl :: FunctionType m,
       fnDerivative :: Int -> FunctionType m
     }
+
+applyTo :: MonadReader ModeInfo m => Map String (Function m) -> String -> [Expr Prim] -> m (Expr Prim)
+applyTo m s args = case Map.lookup s m of
+                     Nothing  -> pure $ Compound s args
+                     Just (Function { fnImpl = fn }) -> fn `appFn` args >>= \case
+                                                        Nothing -> pure (Compound s args)
+                                                        Just x  -> pure x
 
 functionSynonym :: Monad m => String -> String -> Function m
 functionSynonym oldname newname = function oldname (Compound newname <$> ask)
