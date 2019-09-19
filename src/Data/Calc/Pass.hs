@@ -6,7 +6,7 @@ module Data.Calc.Pass(PassT(..), Pass, pass,
                       runPassOnceTD, runPassOnceBU, runPassOnceFull,
                       runPassTDM, runPassBUM, runPassFullM,
                       runPassTD, runPassBU, runPassFull,
-                      fromKleisli) where
+                      fromKleisli, toKleisli) where
 
 import Data.Calc.Expr
 import Data.Calc.Util
@@ -80,3 +80,6 @@ runPassFull p = runIdentity . runPassFullM p
 
 fromKleisli :: Monad m => Kleisli m (Expr a) (Expr b) -> PassT m a b
 fromKleisli (Kleisli f) = PassT f
+
+toKleisli :: Monad m => PassT m a b -> Kleisli m (Expr a) (Expr b)
+toKleisli (PassT f) = (Kleisli f)
