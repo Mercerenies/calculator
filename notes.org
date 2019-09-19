@@ -19,6 +19,6 @@
    - [X] Get rid of fractions if in floating mode
    - [X] Make ~Normalize.hs~ not depend on ~Function.hs~
    - [ ] If in symbolic mode, hold calculations
-   - [ ] Run usual passes into N(...) but forcing into floating mode
- + [ ] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
+   - [X] Run usual passes into N(...) but forcing into floating mode
+ + [X] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
  + [X] Command line args for mode

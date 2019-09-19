@@ -200,3 +200,6 @@ promoteRatiosMaybe = fromKleisli $ proc x -> do
                        if y <= Floating
                        then toKleisli promoteRatios -< x
                        else returnA -< x
+
+basicPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
