@@ -1,6 +1,13 @@
 {-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 
-module Data.Calc.Normalize where
+module Data.Calc.Normalize(normalizeNegatives, levelOperators, levelStdOperators,
+                           simplifyRationals, collectLikeFactors, collectLikeTerms,
+                           collectFactorsFromDenom, flattenNestedExponents,
+                           foldConstants, foldConstantsPow, evalFunctions,
+                           flattenSingletons, flattenStdSingletons,
+                           flattenNullaryOps, flattenStdNullaryOps,
+                           sortTermsOf, sortTermsOfStd, promoteRatios,
+                           promoteRatiosMaybe, basicPass) where
 
 import Data.Calc.Expr
 import Data.Calc.Pass
@@ -21,6 +28,10 @@ import qualified Data.Map as Map
 import qualified Data.Map.Merge.Lazy as Merge
 import Control.Monad.Reader
 import Control.Arrow
+
+coerceToNum :: Expr Prim -> Maybe Number
+coerceToNum (Constant (PrimNum n)) = Just n
+coerceToNum _ = Nothing
 
 normalizeNegatives :: Monad m => ReprInteger a => PassT m a a
 normalizeNegatives = pass subtractionPass . pass negationPass
@@ -145,19 +156,29 @@ foldConstants = pass eval
           eval (Compound "/" [a, b])
               | Just 1 <- coerceToNum b = a
               | Just 0 <- coerceToNum a = Constant (PrimNum 0)
-              -- TODO Float
               | (Just a', Just b') <- (coerceToNum a, coerceToNum b) =
                   Constant $ PrimNum (a' / b')
-          eval (Compound "^" [a, b])
-              | Just 1 <- coerceToNum a = Constant (PrimNum 1)
-              | Just 0 <- coerceToNum b = Constant (PrimNum 1)
-              | Just 1 <- coerceToNum b = a
-              -- TODO Float
-              | (Just a', Just b') <- (coerceToNum a, coerceToNum b) =
-                  Constant $ PrimNum (a' ** b')
           eval x = x
-          coerceToNum (Constant (PrimNum n)) = Just n
-          coerceToNum _ = Nothing
+
+-- This is separate from foldConstants because there are exactness
+-- issues. This needs the ModeInfo reader state so it knows to pass
+-- through on expressions of rationals that would yield non-rational
+-- results.
+foldConstantsPow :: MonadReader ModeInfo m => PassT m Prim Prim
+foldConstantsPow = PassT eval
+    where eval (Compound "^" [a, b])
+              | Just 1 <- coerceToNum a = pure $ Constant (PrimNum 1)
+              | Just 0 <- coerceToNum b = pure $ Constant (PrimNum 1)
+              | Just 1 <- coerceToNum b = pure a
+              | (Just a', Just b') <- (coerceToNum a, coerceToNum b) = do
+                  exactness <- asks exactnessMode
+                  let result = a' ** b'
+                  if isRational a' && isRational b' &&
+                     not (isRational result) && exactness >= Symbolic
+                  then return $ Compound "^" [a, b]
+                  else return . Constant $ PrimNum (a' ** b')
+          eval x = pure x
+
 
 -- TODO Generalize this to be typeclassed like above.
 evalFunctions :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
@@ -198,4 +219,4 @@ promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
 promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
 basicPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives

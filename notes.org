@@ -22,7 +22,7 @@
    - [X] Run usual passes into N(...) but forcing into floating mode
  + [X] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
  + [X] Command line args for mode
- + [ ] Trig simplification step
+ + [-] Trig simplification step
    - The usual trig functions will refuse to evaluate if in symbolic
      mode
    - [ ] Write a simplification that solves any "known" trig function
@@ -30,5 +30,5 @@
    - [ ] Inverse trig functions as well
    - [ ] Solver for transcendentals as well
    - [ ] Powers?
-   - [ ] Powers need to not evaluate if they'll produce a floating
+   - [X] Powers need to not evaluate if they'll produce a floating
      result out of rationals

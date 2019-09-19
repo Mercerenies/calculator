@@ -1,6 +1,6 @@
 {-# LANGUAGE Rank2Types #-}
 
-module Data.Calc.Number(Number(..), cmp, lexEq, lexCmp) where
+module Data.Calc.Number(Number(..), isRational, cmp, lexEq, lexCmp) where
 
 import Data.Ratio
 import Data.Complex
@@ -92,6 +92,10 @@ instance Eq Number where
         where rEq a a' = (a == a')
               dEq a a' = (a == a') || (isNaN a && isNaN a')
               cEq (a :+ b) (a' :+ b') = (a `dEq` a') && (b `dEq` b')
+
+isRational :: Number -> Bool
+isRational (NRatio _) = True
+isRational _ = False
 
 -- Refuses to compare if either argument is complex.
 cmp :: Number -> Number -> Maybe Ordering
