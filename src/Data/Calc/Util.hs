@@ -1,9 +1,9 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, Arrows #-}
 
 module Data.Calc.Util(untilFixed, untilFixedM,
                       maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
                       stripString,
-                      duplicateApply, duplicateApplyM) where
+                      duplicateApply, duplicateApplyM, possibly) where
 
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -54,3 +54,10 @@ duplicateApplyM :: Applicative m => (a -> m a) -> [a] -> m [[a]]
 duplicateApplyM f = go
     where go [] = pure []
           go (x:xs) = liftA2 (:) (liftA2 (:) (f x) (pure xs)) (fmap (x :) <$> (go xs))
+
+possibly :: ArrowChoice a => a b Bool -> a b b -> a b b
+possibly p f = proc x -> do
+                 cond <- p -< x
+                 if cond
+                 then f -< x
+                 else returnA -< x

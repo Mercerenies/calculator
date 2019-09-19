@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, FlexibleContexts, Arrows #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 
 module Data.Calc.Normalize where
 
@@ -195,11 +195,7 @@ promoteRatios = pass go
           go x = x
 
 promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
-promoteRatiosMaybe = fromKleisli $ proc x -> do
-                       y <- Kleisli asks -< exactnessMode
-                       if y <= Floating
-                       then toKleisli promoteRatios -< x
-                       else returnA -< x
+promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
 basicPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
 basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
