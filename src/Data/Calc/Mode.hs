@@ -9,7 +9,7 @@ data ModeInfo = ModeInfo {
 data AngularMode = Radians | Degrees
                    deriving (Show, Read, Eq, Ord, Enum)
 
-data ExactnessMode = Symbolic | Fractional | Floating
+data ExactnessMode = Floating | Fractional | Symbolic
                      deriving (Show, Read, Eq, Ord, Enum)
 
 defaultMode :: ModeInfo

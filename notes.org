@@ -12,6 +12,7 @@
    integers for some computations
  + [X] Get rid of the Rank2Types in FunctionType
  + [X] m (Maybe ...) -> MaybeT m ... in FunctionType
+** Sept 18, 2019
  + [ ] There may still be some neatening (~mmorph~ style) to be done
    with the FunctionType transition
  + [ ] Symbolic mode
@@ -19,3 +20,4 @@
    - [ ] Make ~Normalize.hs~ not depend on ~Function.hs~
    - [ ] If in symbolic mode, hold calculations
    - [ ] Run usual passes into N(...) but forcing into floating mode
+ + [ ] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
