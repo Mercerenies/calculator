@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, FlexibleContexts, GADTs, LambdaCase #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase #-}
 
 module Data.Calc.Function(Function(..), functionSynonym,
                           stdBuiltins,
@@ -18,10 +18,10 @@ import qualified Data.Map as Map
 import Control.Monad.Reader
 import Control.Arrow
 
-compileFns :: [Function] -> Map String Function
+compileFns :: [Function m] -> Map String (Function m)
 compileFns = fmap (fnName &&& id) >>> Map.fromList
 
-stdBuiltins :: Map String Function
+stdBuiltins :: MonadReader ModeInfo m => Map String (Function m)
 stdBuiltins = compileFns [
             Trig.fsin, Trig.fcos, Trig.ftan,
             Trig.fcsc, Trig.fsec, Trig.fcot,
@@ -38,7 +38,7 @@ stdBuiltins = compileFns [
             derivativeFn stdBuiltins
            ]
 
-applyTo :: MonadReader ModeInfo m => Map String Function -> String -> [Expr Prim] -> m (Expr Prim)
+applyTo :: MonadReader ModeInfo m => Map String (Function m) -> String -> [Expr Prim] -> m (Expr Prim)
 applyTo m s args = case Map.lookup s m of
                      Nothing  -> pure $ Compound s args
                      Just (Function { fnImpl = fn }) -> fn args >>= \case

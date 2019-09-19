@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 
 module Data.Calc.Function.Combinatorial(ffact, fdfact, fncr, fnpr, fgcd, flcm) where
 
@@ -11,10 +10,9 @@ import Data.Ratio
 -- TODO Factorial can be extended to gamma function on complexes. Some
 -- of these others may be extendable to at least reals somehow
 
-ffact :: Function
+ffact :: Applicative m => Function m
 ffact = function "fact" f
-    where f :: FunctionType
-          f [Constant (PrimNum x)] = pure . fmap (Constant . PrimNum) $ fact x
+    where f [Constant (PrimNum x)] = pure . fmap (Constant . PrimNum) $ fact x
           f _ = pure Nothing
 
 fact :: Number -> Maybe Number
@@ -24,10 +22,9 @@ fact x = case x of
                    Just . fromInteger $ product [1..numerator y]
            _ -> Nothing
 
-fdfact :: Function
+fdfact :: Applicative m => Function m
 fdfact = function "dfact" f
-    where f :: FunctionType
-          f [Constant (PrimNum x)] = pure . fmap (Constant . PrimNum) $ dfact x
+    where f [Constant (PrimNum x)] = pure . fmap (Constant . PrimNum) $ dfact x
           f _ = pure Nothing
 
 dfact :: Number -> Maybe Number
@@ -37,10 +34,9 @@ dfact x = case x of
                     Just . fromInteger . product $ takeWhile (> 0) [numerator y, numerator y - 2 ..]
             _ -> Nothing
 
-fncr :: Function
+fncr :: Applicative m => Function m
 fncr = function "nCr" f
-    where f :: FunctionType
-          f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ ncr x y
+    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ ncr x y
           f _ = pure Nothing
 
 ncr :: Number -> Number -> Maybe Number
@@ -51,10 +47,9 @@ ncr (NRatio x) (NRatio y)
             in Just . NRatio $ product [x'-y'+1..x'] % product [1..y']
 ncr _ _ = Nothing
 
-fnpr :: Function
+fnpr :: Applicative m => Function m
 fnpr = function "nPr" f
-    where f :: FunctionType
-          f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ npr x y
+    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ npr x y
           f _ = pure Nothing
 
 npr :: Number -> Number -> Maybe Number
@@ -65,20 +60,18 @@ npr (NRatio x) (NRatio y)
             in Just . NRatio $ product [x'-y'+1..x'] % 1
 npr _ _ = Nothing
 
-fgcd :: Function
+fgcd :: Applicative m => Function m
 fgcd = function "gcd" f
-    where f :: FunctionType
-          f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ gcd' x y
+    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ gcd' x y
           f _ = pure Nothing
           gcd' (NRatio x) (NRatio y)
               | denominator x == 1 && denominator y == 1 =
                   Just . NRatio $ gcd (numerator x) (numerator y) % 1
           gcd' _ _ = Nothing
 
-flcm :: Function
+flcm :: Applicative m => Function m
 flcm = function "lcm" f
-    where f :: FunctionType
-          f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ lcm' x y
+    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ lcm' x y
           f _ = pure Nothing
           lcm' (NRatio x) (NRatio y)
               | denominator x == 1 && denominator y == 1 =

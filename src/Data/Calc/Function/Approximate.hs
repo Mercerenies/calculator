@@ -28,5 +28,5 @@ approximately :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
 approximately [expr] = pure . Just $ runPassOnceTD promoteRatios expr
 approximately _ = pure Nothing
 
-approx :: Function
+approx :: MonadReader ModeInfo m => Function m
 approx = function "N" approximately

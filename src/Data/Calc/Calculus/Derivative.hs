@@ -11,7 +11,8 @@ import Control.Monad.Reader
 import Data.Map(Map)
 import qualified Data.Map as Map
 
-derivative :: MonadReader ModeInfo m => Map String Function -> String -> Expr Prim -> m (Expr Prim)
+derivative :: MonadReader ModeInfo m => Map String (Function m) -> String -> Expr Prim ->
+              m (Expr Prim)
 derivative fns t expr = go expr
     where go (Constant (PrimNum _)) = pure $ Constant (PrimNum 0)
           go (Constant (PrimVar t')) = pure $ Constant (PrimNum $ if t == t' then 1 else 0)
@@ -54,7 +55,7 @@ derivative fns t expr = go expr
 
 -- TODO Permit us to take multiple derivatives at once by passing
 -- multiple vars as a list
-derivativeFn :: Map String Function -> Function
+derivativeFn :: MonadReader ModeInfo m => Map String (Function m) -> Function m
 derivativeFn fns = function "D" go
     where go [expr, Constant (PrimVar t)] = Just <$> derivative fns t expr
           go _ = pure Nothing

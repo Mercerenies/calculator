@@ -3,10 +3,10 @@
 
 module Data.Calc.Function.Monad where
 
-import Data.Calc.Function.Type
+--import Data.Calc.Function.Type
 import Data.Calc.Expr
 import Data.Calc.Mode
-import Data.Calc.Number
+--import Data.Calc.Number
 
 import Control.Monad.Reader
 import Control.Monad.Trans.Maybe
