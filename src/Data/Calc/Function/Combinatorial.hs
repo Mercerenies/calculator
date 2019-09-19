@@ -6,74 +6,53 @@ import Data.Calc.Expr
 import Data.Calc.Number
 
 import Data.Ratio
+import Control.Monad.Reader
 
 -- TODO Factorial can be extended to gamma function on complexes. Some
 -- of these others may be extendable to at least reals somehow
 
-ffact :: Applicative m => Function m
+ffact :: Monad m => Function m
 ffact = function "fact" f
-    where f [Constant (PrimNum x)] = pure . fmap (Constant . PrimNum) $ fact x
-          f _ = pure Nothing
+    where f = do
+            [Constant (PrimNum (NRatio x))] <- ask
+            guard $ denominator x == 1 && numerator x >= 0
+            return . Constant . PrimNum . NRatio $ fact (numerator x) % 1
+          fact x = product [1..x]
 
-fact :: Number -> Maybe Number
-fact x = case x of
-           (NRatio y)
-               | denominator y == 1 && numerator y >= 0 ->
-                   Just . fromInteger $ product [1..numerator y]
-           _ -> Nothing
-
-fdfact :: Applicative m => Function m
+fdfact :: Monad m => Function m
 fdfact = function "dfact" f
-    where f [Constant (PrimNum x)] = pure . fmap (Constant . PrimNum) $ dfact x
-          f _ = pure Nothing
+    where f = do
+            [Constant (PrimNum (NRatio x))] <- ask
+            guard $ denominator x == 1 && numerator x >= 0
+            return . Constant . PrimNum . NRatio $ dfact (numerator x) % 1
+          dfact x = fromInteger . product $ takeWhile (> 0) [x, x - 2 ..]
 
-dfact :: Number -> Maybe Number
-dfact x = case x of
-            (NRatio y)
-                | denominator y == 1 && numerator y >= 0 ->
-                    Just . fromInteger . product $ takeWhile (> 0) [numerator y, numerator y - 2 ..]
-            _ -> Nothing
-
-fncr :: Applicative m => Function m
+fncr :: Monad m => Function m
 fncr = function "nCr" f
-    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ ncr x y
-          f _ = pure Nothing
+    where f = do
+            [Constant (PrimNum (NRatio x)), Constant (PrimNum (NRatio y))] <- ask
+            guard $ denominator x == 1 && denominator y == 1 && numerator y >= 0
+            return . Constant . PrimNum . NRatio $ ncr (numerator x) (numerator y)
+          ncr x y = product [x-y+1..x] % product [1..y]
 
-ncr :: Number -> Number -> Maybe Number
-ncr (NRatio x) (NRatio y)
-        | denominator x == 1 && denominator y == 1 && numerator y >= 0 =
-            let x' = numerator x
-                y' = numerator y
-            in Just . NRatio $ product [x'-y'+1..x'] % product [1..y']
-ncr _ _ = Nothing
-
-fnpr :: Applicative m => Function m
+fnpr :: Monad m => Function m
 fnpr = function "nPr" f
-    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ npr x y
-          f _ = pure Nothing
+    where f = do
+            [Constant (PrimNum (NRatio x)), Constant (PrimNum (NRatio y))] <- ask
+            guard $ denominator x == 1 && denominator y == 1 && numerator y >= 0
+            return . Constant . PrimNum . NRatio $ npr (numerator x) (numerator y)
+          npr x y = product [x-y+1..x] % 1
 
-npr :: Number -> Number -> Maybe Number
-npr (NRatio x) (NRatio y)
-        | denominator x == 1 && denominator y == 1 && numerator y >= 0 =
-            let x' = numerator x
-                y' = numerator y
-            in Just . NRatio $ product [x'-y'+1..x'] % 1
-npr _ _ = Nothing
-
-fgcd :: Applicative m => Function m
+fgcd :: Monad m => Function m
 fgcd = function "gcd" f
-    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ gcd' x y
-          f _ = pure Nothing
-          gcd' (NRatio x) (NRatio y)
-              | denominator x == 1 && denominator y == 1 =
-                  Just . NRatio $ gcd (numerator x) (numerator y) % 1
-          gcd' _ _ = Nothing
+    where f = do
+            [Constant (PrimNum (NRatio x)), Constant (PrimNum (NRatio y))] <- ask
+            guard $ denominator x == 1 && denominator y == 1
+            return . Constant . PrimNum . NRatio $ gcd (numerator x) (numerator y) % 1
 
-flcm :: Applicative m => Function m
+flcm :: Monad m => Function m
 flcm = function "lcm" f
-    where f [Constant (PrimNum x), Constant (PrimNum y)] = pure . fmap (Constant . PrimNum) $ lcm' x y
-          f _ = pure Nothing
-          lcm' (NRatio x) (NRatio y)
-              | denominator x == 1 && denominator y == 1 =
-                  Just . NRatio $ lcm (numerator x) (numerator y) % 1
-          lcm' _ _ = Nothing
+    where f = do
+            [Constant (PrimNum (NRatio x)), Constant (PrimNum (NRatio y))] <- ask
+            guard $ denominator x == 1 && denominator y == 1
+            return . Constant . PrimNum . NRatio $ lcm (numerator x) (numerator y) % 1

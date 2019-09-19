@@ -43,7 +43,7 @@ derivative fns t expr = go expr
           go (Compound s xs)
               | Just (Function { fnDerivative }) <- Map.lookup s fns = do
                   let op (n, x) = do
-                        inner <- fnDerivative n xs
+                        inner <- fnDerivative n `appFn` xs
                         outer <- go x
                         return $ (\a -> Compound "*" [a, outer]) <$> inner
                   args <- fmap sequence . mapM op $ zip [0..] xs
@@ -57,5 +57,6 @@ derivative fns t expr = go expr
 -- multiple vars as a list
 derivativeFn :: MonadReader ModeInfo m => Map String (Function m) -> Function m
 derivativeFn fns = function "D" go
-    where go [expr, Constant (PrimVar t)] = Just <$> derivative fns t expr
-          go _ = pure Nothing
+    where go = do
+            [expr, Constant (PrimVar t)] <- ask
+            lift . lift $ derivative fns t expr

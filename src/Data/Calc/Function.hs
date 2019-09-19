@@ -41,7 +41,7 @@ stdBuiltins = compileFns [
 applyTo :: MonadReader ModeInfo m => Map String (Function m) -> String -> [Expr Prim] -> m (Expr Prim)
 applyTo m s args = case Map.lookup s m of
                      Nothing  -> pure $ Compound s args
-                     Just (Function { fnImpl = fn }) -> fn args >>= \case
+                     Just (Function { fnImpl = fn }) -> fn `appFn` args >>= \case
                                                         Nothing -> pure (Compound s args)
                                                         Just x  -> pure x
 

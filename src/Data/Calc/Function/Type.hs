@@ -2,15 +2,20 @@
 
 module Data.Calc.Function.Type(FunctionType, Function(..), functionSynonym, function,
                                withDeriv, inOneVar,
-                               simpleUnaryFn, simpleBinaryFn) where
+                               simpleUnaryFn, simpleBinaryFn,
+                               appFn) where
 
 import Data.Calc.Expr
 --import Data.Calc.Mode
 import Data.Calc.Number
 
---import Control.Monad.Reader
+import Control.Monad.Reader
+import Control.Monad.Trans.Maybe
+import Data.Function
 
-type FunctionType m = [Expr Prim] -> m (Maybe (Expr Prim))
+type FunctionMonad m = ReaderT [Expr Prim] (MaybeT m)
+
+type FunctionType m = FunctionMonad m (Expr Prim)
 
 --type DerivativeType = (forall m. MonadReader ModeInfo m =>
 --                       (Expr Prim -> m (Expr Prim)) ->
@@ -22,28 +27,31 @@ data Function m = Function {
       fnDerivative :: Int -> FunctionType m
     }
 
-functionSynonym :: Applicative m => String -> String -> Function m
-functionSynonym oldname newname = function oldname (pure . Just . Compound newname)
+functionSynonym :: Monad m => String -> String -> Function m
+functionSynonym oldname newname = function oldname (Compound newname <$> ask)
 
-function :: Applicative m => String -> FunctionType m -> Function m
-function name impl = Function name impl (\_ _ -> pure Nothing) -- By default, no known derivative
+function :: Monad m => String -> FunctionType m -> Function m
+function name impl = Function name impl (\_ -> fail "no known derivative")
 
 -- Intended to be used infix
 withDeriv :: Function m -> (Int -> FunctionType m) -> Function m
 withDeriv f t = f { fnDerivative = t }
 
-inOneVar :: Applicative m => (Expr Prim -> m (Expr Prim)) -> (Int -> FunctionType m)
-inOneVar f 0 [a] = Just <$> f a
-inOneVar _ _ _ = pure Nothing
+inOneVar :: Monad m => (Expr Prim -> m (Expr Prim)) -> (Int -> FunctionType m)
+inOneVar f 0 = do
+  [a] <- ask
+  lift . lift $ f a
+inOneVar _ _ = fail "index out of bounds (derivative)"
 
-simpleUnaryFn :: Applicative m =>
-                 (Number -> m Number) ->
-                 ([Expr Prim] -> m (Maybe (Expr Prim)))
-simpleUnaryFn fn [Constant (PrimNum a)] = (Just . Constant . PrimNum) <$> fn a
-simpleUnaryFn _ _ = pure Nothing
+simpleUnaryFn :: Monad m => (Number -> m Number) -> FunctionType m
+simpleUnaryFn fn = do
+  [Constant (PrimNum a)] <- ask
+  Constant . PrimNum <$> (lift . lift $ fn a)
 
-simpleBinaryFn :: Applicative m =>
-                  (Number -> Number -> m Number) ->
-                  ([Expr Prim] -> m (Maybe (Expr Prim)))
-simpleBinaryFn fn [Constant (PrimNum a), Constant (PrimNum b)] = (Just . Constant . PrimNum) <$> fn a b
-simpleBinaryFn _ _ = pure Nothing
+simpleBinaryFn :: Monad m => (Number -> Number -> m Number) -> FunctionType m
+simpleBinaryFn fn = do
+  [Constant (PrimNum a), Constant (PrimNum b)] <- ask
+  Constant . PrimNum <$> (lift . lift $ fn a b)
+
+appFn :: FunctionMonad m a -> [Expr Prim] -> m (Maybe a)
+appFn fn exprs = exprs & runReaderT fn & runMaybeT

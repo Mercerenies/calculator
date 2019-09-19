@@ -15,7 +15,6 @@ import Data.Calc.Pass
 import Data.Calc.Normalize
 import Data.Calc.Parse
 import Data.Calc.Mode
-import Data.Calc.Function.Monad()
 
 import Control.Monad
 import Control.Monad.Reader

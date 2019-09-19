@@ -24,9 +24,10 @@ promoteRatios = pass go
     where go (Constant (PrimNum (NRatio a))) = Constant (PrimNum (NDouble $ fromRational a))
           go x = x
 
-approximately :: MonadReader ModeInfo m => [Expr Prim] -> m (Maybe (Expr Prim))
-approximately [expr] = pure . Just $ runPassOnceTD promoteRatios expr
-approximately _ = pure Nothing
+approximately :: MonadReader ModeInfo m => FunctionType m
+approximately = do
+  [expr] <- ask
+  return $ runPassOnceTD promoteRatios expr
 
 approx :: MonadReader ModeInfo m => Function m
 approx = function "N" approximately
