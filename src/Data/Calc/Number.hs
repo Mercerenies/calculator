@@ -1,6 +1,6 @@
 {-# LANGUAGE Rank2Types #-}
 
-module Data.Calc.Number(Number(..), cmp, lexCmp) where
+module Data.Calc.Number(Number(..), cmp, lexEq, lexCmp) where
 
 import Data.Ratio
 import Data.Complex
@@ -97,6 +97,12 @@ instance Eq Number where
 cmp :: Number -> Number -> Maybe Ordering
 NRatio a `cmp` NRatio a' = Just (a `compare` a')
 a `cmp` a' = liftA2 compare (toD a) (toD a')
+
+-- Strict equality, arguments of different precision (e.g. a fraction
+-- and an equivalent floating point) will never compare equal under
+-- this comparison. The ordering is arbitrary but consistent
+lexEq :: Number -> Number -> Bool
+lexEq a b = lexCmp a b == EQ
 
 -- "Lexicographic" comparison. Works like the derived Ord instance
 -- would if Data.Complex had a (derived) Ord as well, ignoring the

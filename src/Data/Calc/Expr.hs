@@ -12,7 +12,11 @@ data Expr a = Constant a
 
 data Prim = PrimNum Number
           | PrimVar String
-            deriving (Eq)
+
+-- Use "strict" notion of equality. e.g. 0.5 != 1:2 even though they
+-- represent the same number.
+instance Eq Prim where
+    a == b = a `compare` b == EQ
 
 -- So we can't derive this instance since Number is fundamentally a
 -- complex number, which Haskell won't let us order, but we need an
