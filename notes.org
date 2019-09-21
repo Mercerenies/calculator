@@ -32,3 +32,8 @@
    - [ ] Powers?
    - [X] Powers need to not evaluate if they'll produce a floating
      result out of rationals
+** Sept 20, 2019
+ + [X] Constants
+   - [X] Pi
+   - [X] e
+   - [X] i

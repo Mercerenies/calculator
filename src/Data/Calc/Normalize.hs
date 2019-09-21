@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts, NamedFieldPuns #-}
 
 module Data.Calc.Normalize(normalizeNegatives, levelOperators, levelStdOperators,
                            simplifyRationals, collectLikeFactors, collectLikeTerms,
@@ -16,6 +16,7 @@ import Data.Calc.Util
 import Data.Calc.Function.Type
 import Data.Calc.Mode
 import Data.Calc.Number
+import Data.Calc.Constants
 import Data.Calc.Algebra.Factoring
 
 import Prelude hiding ((.), id)
@@ -186,6 +187,18 @@ evalFunctions builtins = PassT eval
     where eval (Compound h xs) = applyTo builtins h xs
           eval x = pure x
 
+evalConstants :: MonadReader ModeInfo m => PassT m Prim Prim
+evalConstants = PassT eval
+    where eval (Constant (PrimVar x))
+              | Just (ConstValue { constValue, constExact }) <- Map.lookup x consts = do
+                  exactness <- asks exactnessMode
+                  if exactness < Symbolic || constExact then
+                      return $ Constant constValue
+                  else
+                      return $ Constant (PrimVar x)
+          eval x = pure x
+          consts = stdConstants
+
 flattenSingletons :: Monad m => [String] -> PassT m a a
 flattenSingletons ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' [a]) | str == str' = a
@@ -219,4 +232,4 @@ promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
 promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
 basicPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
