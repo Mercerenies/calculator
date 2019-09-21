@@ -23,8 +23,8 @@
  + [X] Move the primary pass from ~Main.hs~ to ~Normalize.hs~
  + [X] Command line args for mode
  + [-] Trig simplification step
-   - The usual trig functions will refuse to evaluate if in symbolic
-     mode
+   - [X] The usual trig functions will refuse to evaluate if in
+     symbolic mode
    - [ ] Write a simplification that solves any "known" trig function
      values exactly
    - [ ] Inverse trig functions as well
