@@ -52,7 +52,7 @@ example4 :: Expr Prim
 example4 = Compound "+" [Constant (PrimVar "A"), Constant (PrimVar "B"), Constant (PrimVar "C")]
 
 myPass :: MonadReader ModeInfo m => PassT m Prim Prim
-myPass = basicPass stdBuiltins
+myPass = fullPass stdBuiltins
 
 main :: IO ()
 main = do

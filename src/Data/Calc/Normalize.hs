@@ -7,7 +7,7 @@ module Data.Calc.Normalize(normalizeNegatives, levelOperators, levelStdOperators
                            flattenSingletons, flattenStdSingletons,
                            flattenNullaryOps, flattenStdNullaryOps,
                            sortTermsOf, sortTermsOfStd, promoteRatios,
-                           promoteRatiosMaybe, basicPass) where
+                           promoteRatiosMaybe, fullPass) where
 
 import Data.Calc.Expr
 import Data.Calc.Pass
@@ -18,6 +18,7 @@ import Data.Calc.Mode
 import Data.Calc.Number
 import Data.Calc.Constants
 import Data.Calc.Algebra.Factoring
+import qualified Data.Calc.Algebra.Trigonometry as Trig
 
 import Prelude hiding ((.), id)
 import Data.List(sort, partition)
@@ -231,5 +232,8 @@ promoteRatios = pass go
 promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
 promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
-basicPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-basicPass fns = promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+innerSimplePass :: MonadReader ModeInfo m => PassT m Prim Prim
+innerSimplePass = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+
+fullPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+fullPass fns = Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives

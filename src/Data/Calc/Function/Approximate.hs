@@ -22,7 +22,7 @@ import Data.Map(Map)
 approximately :: MonadReader ModeInfo m => Map String (Function m) -> FunctionType m
 approximately fns = do
   [expr] <- ask
-  lift . lift $ local (\mode -> mode { exactnessMode = Floating}) $ runPassTDM (basicPass fns) expr
+  lift . lift $ local (\mode -> mode { exactnessMode = Floating}) $ runPassTDM (fullPass fns) expr
 
 approx :: MonadReader ModeInfo m => Map String (Function m) -> Function m
 approx fns = function "N" (approximately fns)

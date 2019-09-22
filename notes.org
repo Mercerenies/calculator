@@ -25,7 +25,7 @@
  + [-] Trig simplification step
    - [X] The usual trig functions will refuse to evaluate if in
      symbolic mode
-   - [ ] Write a simplification that solves any "known" trig function
+   - [X] Write a simplification that solves any "known" trig function
      values exactly
    - [ ] Inverse trig functions as well
    - [ ] Solver for transcendentals as well
@@ -37,3 +37,5 @@
    - [X] Pi
    - [X] e
    - [X] i
+** Sept 21, 2019
+ + [ ] Simplify ~2 * x / 2~
