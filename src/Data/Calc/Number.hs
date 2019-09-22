@@ -151,7 +151,11 @@ instance Num Number where
     fromInteger = NRatio . fromInteger
 
 instance Fractional Number where
-    recip = unaryPromote recip
+    recip (NRatio a)
+        | a == 0    = recip (NDouble 0)
+        | otherwise = NRatio $ recip a
+    recip (NDouble a) = NDouble $ recip a
+    recip (NComplex a) = NComplex $ recip a
     fromRational = NRatio
 
 instance Floating Number where
