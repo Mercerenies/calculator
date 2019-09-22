@@ -81,6 +81,11 @@ floatingPromote f a =
 --binaryPromote' :: (forall a. (Fractional a, Eq a) => a -> a -> b) -> Number -> Number -> b
 --binaryPromote' f = binaryFold f f f
 
+safeDCmp :: Double -> Double -> Ordering
+safeDCmp a a'
+    | isNaN a && isNaN a' = EQ
+    | otherwise = a `compare` a'
+
 instance Eq Number where
     -- The various simplifications will choke if an expression can't
     -- be equal to itself, because the ideal normalization is one that
@@ -115,10 +120,10 @@ lexCmp :: Number -> Number -> Ordering
 lexCmp (NRatio a) (NRatio a') = a `compare` a'
 lexCmp (NRatio _) _ = LT
 lexCmp _ (NRatio _) = GT
-lexCmp (NDouble a) (NDouble a') = a `compare` a'
+lexCmp (NDouble a) (NDouble a') = a `safeDCmp` a'
 lexCmp (NDouble _) _ = LT
 lexCmp _ (NDouble _) = GT
-lexCmp (NComplex (a :+ b)) (NComplex (a' :+ b')) = a `compare` a' <> b `compare` b'
+lexCmp (NComplex (a :+ b)) (NComplex (a' :+ b')) = a `safeDCmp` a' <> b `safeDCmp` b'
 
 pow :: Number -> Number -> Number
 -- Deal with the "base" cases of zero.
