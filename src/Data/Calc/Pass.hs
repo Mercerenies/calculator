@@ -6,7 +6,8 @@ module Data.Calc.Pass(PassT(..), Pass, pass,
                       runPassOnceTD, runPassOnceBU, runPassOnceFull,
                       runPassTDM, runPassBUM, runPassFullM,
                       runPassTD, runPassBU, runPassFull,
-                      fromKleisli, toKleisli, conditionalPass) where
+                      fromKleisli, toKleisli, conditionalPass,
+                      liftPassT) where
 
 import Data.Calc.Expr
 import Data.Calc.Util
@@ -15,6 +16,7 @@ import Prelude hiding (id, (.))
 import Control.Category
 import Control.Arrow
 import Control.Monad
+import Control.Monad.Trans
 import Data.Functor.Identity
 import Data.Profunctor
 
@@ -86,3 +88,6 @@ toKleisli (PassT f) = (Kleisli f)
 
 conditionalPass :: Monad m => (Expr a -> m Bool) -> PassT m a a -> PassT m a a
 conditionalPass p f = fromKleisli $ possibly (Kleisli p) (toKleisli f)
+
+liftPassT :: (MonadTrans t, Monad m) => PassT m a b -> PassT (t m) a b
+liftPassT (PassT p) = PassT $ lift . p

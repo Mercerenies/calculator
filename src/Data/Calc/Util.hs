@@ -3,8 +3,10 @@
 module Data.Calc.Util(untilFixed, untilFixedM,
                       maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
                       stripString,
-                      duplicateApply, duplicateApplyM, possibly) where
+                      duplicateApply, duplicateApplyM, possibly,
+                      maybeToFail) where
 
+import Prelude hiding (fail)
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Data.List(mapAccumL)
@@ -12,7 +14,8 @@ import Data.Monoid
 import Data.Functor.Identity
 import qualified Data.Text as T
 import Control.Arrow
-import Control.Monad
+import Control.Monad hiding (fail)
+import Control.Monad.Fail
 import Control.Applicative
 
 untilFixed :: Eq a => (a -> a) -> a -> a
@@ -61,3 +64,7 @@ possibly p f = proc x -> do
                  if cond
                  then f -< x
                  else returnA -< x
+
+maybeToFail :: MonadFail m => Maybe a -> m a
+maybeToFail Nothing = fail "Nothing"
+maybeToFail (Just x) = pure x
