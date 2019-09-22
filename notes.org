@@ -38,4 +38,9 @@
    - [X] e
    - [X] i
 ** Sept 21, 2019
- + [ ] Simplify ~2 * x / 2~
+ + [X] Simplify ~2 * x / 2~
+** Sept 22, 2019
+ + [ ] Consider how worth it it is to be using Control.Category
+   versions of identity and composition and if there's a performance
+   hit.
+ + [ ] Correct parse order for ~/~

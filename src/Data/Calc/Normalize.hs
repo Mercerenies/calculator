@@ -3,7 +3,8 @@
 module Data.Calc.Normalize(normalizeNegatives, levelOperators, levelStdOperators,
                            simplifyRationals, collectLikeFactors, collectLikeTerms,
                            collectFactorsFromDenom, flattenNestedExponents,
-                           foldConstants, foldConstantsPow, evalFunctions,
+                           foldConstants, foldConstantsRational, foldConstantsPow,
+                           evalFunctions,
                            flattenSingletons, flattenStdSingletons,
                            flattenNullaryOps, flattenStdNullaryOps,
                            sortTermsOf, sortTermsOfStd, promoteRatios,
@@ -24,6 +25,7 @@ import Prelude hiding ((.), id)
 import Data.List(sort, partition)
 import Data.Maybe
 import Data.Monoid
+import Data.Ratio
 import Data.Function((&))
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -67,9 +69,9 @@ simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
           -- a(b/c)d ==> (abd)/c
           rule3 (Compound "*" xs)
               | any isDivision xs =
-                  let numerator = map extractNum xs
-                      denominator = mapMaybe extractDenom xs
-                  in Compound "/" [Compound "*" numerator, Compound "*" denominator]
+                  let num = map extractNum xs
+                      den = mapMaybe extractDenom xs
+                  in Compound "/" [Compound "*" num, Compound "*" den]
           rule3 x = x
           isDivision (Compound "/" _) = True
           isDivision _ = False
@@ -162,6 +164,30 @@ foldConstants = pass eval
                   Constant $ PrimNum (a' / b')
           eval x = x
 
+foldConstantsRational :: Monad m => PassT m Prim Prim
+foldConstantsRational = pass eval
+    where eval (Compound "/" [num, den]) =
+              let numt = terms num
+                  dent = terms den
+                  total = selectConstants numt / selectConstants dent
+                  numt' = removeConstants numt
+                  dent' = removeConstants dent
+              in case total of
+                   0 -> Constant (PrimNum 0)
+                   1 -> Compound "/" [prod numt', prod dent']
+                   NRatio n | numerator n == 1 ->
+                                Compound "/" [prod numt',
+                                              prod (Constant (PrimNum (NRatio (recip n))) : dent')]
+                   n -> Compound "/" [prod (Constant (PrimNum n) : numt'), prod dent']
+          eval x = x
+          terms (Compound "*" xs) = xs
+          terms x = [x]
+          selectConstants = getProduct . foldMap (maybe 1 Product . coerceToNum)
+          removeConstants = filter (isNothing . coerceToNum)
+          prod []  = Constant (PrimNum 1)
+          prod [x] = x
+          prod xs  = Compound "*" xs
+
 -- This is separate from foldConstants because there are exactness
 -- issues. This needs the ModeInfo reader state so it knows to pass
 -- through on expressions of rationals that would yield non-rational
@@ -233,7 +259,7 @@ promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
 promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
 innerSimplePass :: MonadReader ModeInfo m => PassT m Prim Prim
-innerSimplePass = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+innerSimplePass = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 fullPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
