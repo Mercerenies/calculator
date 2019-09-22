@@ -17,12 +17,12 @@ stdOps :: Map String Op
 stdOps = Map.fromList [
           ("+", Op " + " 6 LeftAssoc Infix),
           ("-", Op " - " 6 LeftAssoc Infix),
-          ("*", Op " * " 7 LeftAssoc Infix),
+          ("*", Op " * " 8 LeftAssoc Infix),
           ("/", Op " / " 7 LeftAssoc Infix),
-          ("^", Op "^" 8 RightAssoc Infix),
+          ("^", Op "^" 9 RightAssoc Infix),
           ("_", Op "-" 6 LeftAssoc Prefix),
-          ("fact", Op "!" 9 RightAssoc Postfix),
-          ("dfact", Op "!!" 9 RightAssoc Postfix)
+          ("fact", Op "!" 10 RightAssoc Postfix),
+          ("dfact", Op "!!" 10 RightAssoc Postfix)
          ]
 
 getStdOp :: String -> Maybe Op
