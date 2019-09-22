@@ -8,7 +8,7 @@
  + [X] Simplify ~y / y^2~
  + [ ] (Consider ~D(tan(x)^2, x)~ as a stretch goal)
  + [X] Simplify ~(x^2)^2~
- + [ ] Make floating-points that are actually integers be treated as
+ + [X] Make floating-points that are actually integers be treated as
    integers for some computations
  + [X] Get rid of the Rank2Types in FunctionType
  + [X] m (Maybe ...) -> MaybeT m ... in FunctionType
