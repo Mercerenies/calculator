@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, LambdaCase #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase, RecordWildCards #-}
 
 module Data.Calc.Algebra.Trigonometry where
 
@@ -20,8 +20,9 @@ import Control.Arrow
 
 data TrigData = TrigData {
       trigName :: String,
-      trigTable :: Map Integer (Expr Prim)
-    }
+      trigTable :: Map Integer (Expr Prim),
+      trigPeriod :: Maybe Integer
+    } deriving (Show)
 
 negated :: Expr a -> Expr a
 negated x = Compound "_" [x]
@@ -57,13 +58,22 @@ compileTrigData = fmap (trigName &&& id) >>> Map.fromList
 knownTrigData :: Map String TrigData
 knownTrigData =
     compileTrigData [
-        TrigData "sin" knownSinDeg,
-        TrigData "cos" knownCosDeg
+        TrigData "sin" knownSinDeg (Just 360),
+        TrigData "cos" knownCosDeg (Just 360)
+    ]
+
+knownTrigSynonyms :: Map String (Expr Prim -> Expr Prim)
+knownTrigSynonyms =
+    Map.fromList [
+        ("tan", \x -> Compound "/" [Compound "sin" [x], Compound "cos" [x]]),
+        ("sec", \x -> Compound "/" [Constant (PrimNum 1), Compound "cos" [x]]),
+        ("csc", \x -> Compound "/" [Constant (PrimNum 1), Compound "sin" [x]]),
+        ("cot", \x -> Compound "/" [Compound "cos" [x], Compound "sin" [x]])
     ]
 
 simpleSolve :: (MonadFail m, MonadReader ModeInfo m) =>
-               PassT m Prim Prim -> Map Integer (Expr Prim) -> Expr Prim -> m (Expr Prim)
-simpleSolve inner m x = do
+               PassT m Prim Prim -> TrigData -> Expr Prim -> m (Expr Prim)
+simpleSolve inner (TrigData {..}) x = do
   -- TODO At some point I'd like to automate this "convert unit X to
   -- unit Y" thing, but for now we need to explicitly convert from X
   -- to radians then to Y.
@@ -71,12 +81,31 @@ simpleSolve inner m x = do
   factor2 <- local (\mode -> mode { angularMode = Degrees }) radToThetaFactorSym
   Constant (PrimNum (NRatio x')) <- runPassTDM inner (Compound "*" [factor1, factor2, x])
   unless (denominator x' == 1) $ fail "can't lookup non-integer degree amounts"
-  maybeToFail $ Map.lookup (numerator x') m
+  let value = case trigPeriod of
+                Nothing -> numerator x'
+                Just p  -> numerator x' `mod` p
+  maybeToFail $ Map.lookup value trigTable
 
+-- Fills in the values for the elementary trig functions, such as sin
+-- and cos, from a table of known values.
 simpleSolvePass :: MonadReader ModeInfo m => PassT m Prim Prim -> PassT m Prim Prim
 simpleSolvePass inner = PassT go
-    where go (Compound f [x]) | Just td <- Map.lookup f knownTrigData =
-              runMaybeT (simpleSolve (liftPassT inner) (trigTable td) x) >>= \case
+    where go (Compound f [x]) | Just dat <- Map.lookup f knownTrigData =
+              runMaybeT (simpleSolve (liftPassT inner) dat x) >>= \case
                         Nothing -> pure (Compound f [x])
                         Just x' -> pure x'
           go x = pure x
+
+-- Solves "equivalent" trig functions, such as replacing tan with
+-- sin/cos.
+equivSolvePass :: MonadReader ModeInfo m => PassT m Prim Prim -> PassT m Prim Prim
+equivSolvePass inner = PassT go
+    where go (Compound f [x]) | Just repl <- Map.lookup f knownTrigSynonyms =
+              runMaybeT (runPassTDM walk $ repl x) >>= \case
+                        Nothing -> pure (Compound f [x])
+                        Just x' -> pure x'
+          go x = pure x
+          walk = PassT walk'
+          walk' (Compound f [x]) | Just dat <- Map.lookup f knownTrigData =
+                 simpleSolve (liftPassT inner) dat x
+          walk' x = pure x
