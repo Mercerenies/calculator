@@ -17,28 +17,28 @@ import Control.Monad.Reader
 multiplyBy :: Expr a -> Expr a -> Expr a
 multiplyBy x y = Compound "*" [x, y]
 
-unitByFactor :: String -> Expr Prim -> Unit d (Expr Prim) (Expr Prim)
-unitByFactor name factor =
-    unit name (multiplyBy $ Compound "/" [Constant $ PrimNum 1, factor]) (multiplyBy factor)
+unitByFactor :: String -> Dimension -> Expr Prim -> Unit (Expr Prim) (Expr Prim)
+unitByFactor name dim factor =
+    unit name dim (multiplyBy $ Compound "/" [Constant $ PrimNum 1, factor]) (multiplyBy factor)
 
-radians :: Unit 'Angle (Expr Prim) (Expr Prim)
-radians = unit "rad" id id
+radians :: Unit (Expr Prim) (Expr Prim)
+radians = unit "rad" Angle id id
 
-degrees :: Unit 'Angle (Expr Prim) (Expr Prim)
-degrees = unitByFactor "deg" $ Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
+degrees :: Unit (Expr Prim) (Expr Prim)
+degrees = unitByFactor "deg" Angle $ Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
 
-meters :: Unit 'Length (Expr Prim) (Expr Prim)
-meters = unit "m" id id
+meters :: Unit (Expr Prim) (Expr Prim)
+meters = unit "m" Length id id
 
-centimeters :: Unit 'Length (Expr Prim) (Expr Prim)
-centimeters = unitByFactor "cm" $ Constant (PrimNum 100)
+centimeters :: Unit (Expr Prim) (Expr Prim)
+centimeters = unitByFactor "cm" Length $ Constant (PrimNum 100)
 
-table :: Map String (RuntimeUnit (Expr Prim) (Expr Prim))
+table :: Map String (Unit (Expr Prim) (Expr Prim))
 table = Map.fromList [
-         ("rad", runtime radians),
-         ("deg", runtime degrees),
-         ("m", runtime meters),
-         ("cm", runtime centimeters)
+         ("rad", radians),
+         ("deg", degrees),
+         ("m", meters),
+         ("cm", centimeters)
         ]
 
 -- This is a cheap and dirty covert function. It's just for me to test
@@ -51,5 +51,4 @@ simpleConvert = function "__conv" go
             [expr, Constant (PrimVar old), Constant (PrimVar new)] <- ask
             old' <- maybeToFail $ Map.lookup old table
             new' <- maybeToFail $ Map.lookup new table
-            MatchingUnits old'' new'' <- maybeToFail $ compareDims old' new'
-            return $ convert old'' new'' expr
+            maybeToFail $ convert old' new' expr
