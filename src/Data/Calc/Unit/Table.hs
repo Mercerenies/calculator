@@ -13,6 +13,7 @@ import Data.Map(Map)
 import qualified Data.Map as Map
 --import Data.Ratio
 import Control.Monad.Reader
+import Control.Arrow
 
 multiplyBy :: Expr a -> Expr a -> Expr a
 multiplyBy x y = Compound "*" [x, y]
@@ -33,12 +34,15 @@ meters = Unit "m" Length id id
 centimeters :: Unit (Expr Prim) (Expr Prim)
 centimeters = unitByFactor "cm" Length $ Constant (PrimNum 100)
 
+compileUnits :: [Unit b a] -> Map String (Unit b a)
+compileUnits = map (unitName &&& id) >>> Map.fromList
+
 table :: Map String (Unit (Expr Prim) (Expr Prim))
-table = Map.fromList [
-         ("rad", radians),
-         ("deg", degrees),
-         ("m", meters),
-         ("cm", centimeters)
+table = compileUnits [
+         radians,
+         degrees,
+         meters,
+         centimeters
         ]
 
 -- This is a cheap and dirty covert function. It's just for me to test
