@@ -19,16 +19,16 @@ multiplyBy x y = Compound "*" [x, y]
 
 unitByFactor :: String -> Dimension -> Expr Prim -> Unit (Expr Prim) (Expr Prim)
 unitByFactor name dim factor =
-    unit name dim (multiplyBy $ Compound "/" [Constant $ PrimNum 1, factor]) (multiplyBy factor)
+    Unit name dim (multiplyBy $ Compound "/" [Constant $ PrimNum 1, factor]) (multiplyBy factor)
 
 radians :: Unit (Expr Prim) (Expr Prim)
-radians = unit "rad" Angle id id
+radians = Unit "rad" Angle id id
 
 degrees :: Unit (Expr Prim) (Expr Prim)
 degrees = unitByFactor "deg" Angle $ Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
 
 meters :: Unit (Expr Prim) (Expr Prim)
-meters = unit "m" Length id id
+meters = Unit "m" Length id id
 
 centimeters :: Unit (Expr Prim) (Expr Prim)
 centimeters = unitByFactor "cm" Length $ Constant (PrimNum 100)

@@ -1,6 +1,6 @@
 
-module Data.Calc.Unit.Type(Unit(), UnitalValue(..),
-                           unit, baseUnit,
+module Data.Calc.Unit.Type(Unit(..), UnitalValue(..),
+                           baseUnit,
                            toBaseUnit,
                            unsafeConvertTo, unsafeConvert,
                            convertTo, convert) where
@@ -8,10 +8,10 @@ module Data.Calc.Unit.Type(Unit(), UnitalValue(..),
 import Data.Calc.Unit.Dimension
 
 data Unit b a = Unit {
-      unitName_ :: String,
-      unitDim_ :: Dimension,
-      unitToBase_ :: a -> b,
-      unitFromBase_ :: b -> a
+      unitName :: String,
+      unitDim :: Dimension,
+      unitToBase :: a -> b,
+      unitFromBase :: b -> a
     }
 
 data UnitalValue b a = UnitalValue {
@@ -20,27 +20,24 @@ data UnitalValue b a = UnitalValue {
     }
 
 instance Show (Unit b a) where
-    showsPrec _ x = (unitName_ x ++)
+    showsPrec _ x = (unitName x ++)
 
 instance Show a => Show (UnitalValue b a) where
     showsPrec n (UnitalValue u x) = showParen (n >= 7) $ showsPrec (max n 8) x . (" " ++) . shows u
 
-unit :: String -> Dimension -> (a -> b) -> (b -> a) -> Unit b a
-unit = Unit
-
 baseUnit :: Dimension -> Unit a a
-baseUnit d = unit "(base)" d id id
+baseUnit d = Unit "(base)" d id id
 
 toBaseUnit :: UnitalValue b a -> UnitalValue b b
-toBaseUnit v = let d = unitDim_ $ valueUnit v
+toBaseUnit v = let d = unitDim $ valueUnit v
                in unsafeConvertTo (baseUnit d) v
 
 unsafeConvertTo :: Unit b a' -> UnitalValue b a -> UnitalValue b a'
-unsafeConvertTo u' (UnitalValue u a) = UnitalValue u' . unitFromBase_ u' . unitToBase_ u $ a
+unsafeConvertTo u' (UnitalValue u a) = UnitalValue u' . unitFromBase u' . unitToBase u $ a
 
 convertTo :: Unit b a' -> UnitalValue b a -> Maybe (UnitalValue b a')
 convertTo u' (UnitalValue u a)
-    | unitDim_ u == unitDim_ u' = Just $ unsafeConvertTo u' (UnitalValue u a)
+    | unitDim u == unitDim u' = Just $ unsafeConvertTo u' (UnitalValue u a)
     | otherwise = Nothing
 
 unsafeConvert :: Unit b a -> Unit b a' -> a -> a'
