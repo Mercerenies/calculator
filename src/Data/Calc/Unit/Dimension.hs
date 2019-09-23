@@ -2,8 +2,10 @@
 
 module Data.Calc.Unit.Dimension where
 
-data Dimension = Angle | Length
+data Dimension = Angle | Length | Time
                  deriving (Show, Read, Eq, Ord, Enum)
+
+-- TODO I guess we don't really need the KnownDim magic anymore.
 
 class KnownDim (d :: Dimension) where
     runDim :: proxy d -> Dimension

@@ -1,7 +1,6 @@
 
 module Data.Calc.Unit.Type(Unit(..), UnitalValue(..),
-                           baseUnit,
-                           toBaseUnit,
+                           baseUnit, toBaseUnit, synonym,
                            unsafeConvertTo, unsafeConvert,
                            convertTo, convert) where
 
@@ -31,6 +30,9 @@ baseUnit d = Unit "(base)" d id id
 toBaseUnit :: UnitalValue b a -> UnitalValue b b
 toBaseUnit v = let d = unitDim $ valueUnit v
                in unsafeConvertTo (baseUnit d) v
+
+synonym :: String -> Unit b a -> Unit b a
+synonym s u = u { unitName = s }
 
 unsafeConvertTo :: Unit b a' -> UnitalValue b a -> UnitalValue b a'
 unsafeConvertTo u' (UnitalValue u a) = UnitalValue u' . unitFromBase u' . unitToBase u $ a

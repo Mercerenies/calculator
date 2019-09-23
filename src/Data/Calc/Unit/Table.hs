@@ -62,6 +62,15 @@ degrees = unitByFactor "deg" Angle $ Compound "/" [Constant (PrimNum 180), Const
 meters :: Unit (Expr Prim) (Expr Prim)
 meters = Unit "m" Length id id
 
+seconds :: Unit (Expr Prim) (Expr Prim)
+seconds = Unit "s" Time id id
+
+seconds' :: Unit (Expr Prim) (Expr Prim)
+seconds' = synonym "sec" seconds
+
+minutes :: Unit (Expr Prim) (Expr Prim)
+minutes = unitByFactor "min" Time . recipOf $ Constant (PrimNum 60)
+
 compileUnits :: [Unit b a] -> Map String (Unit b a)
 compileUnits = map (unitName &&& id) >>> Map.fromList
 
@@ -72,7 +81,11 @@ table = compileUnits $ concat [
          [radians, degrees],
 
          -- Length units
-         expandSIPrefixes meters
+         expandSIPrefixes meters,
+
+        -- Time units
+         expandSIPrefixes seconds,
+         [seconds', minutes]
 
         ]
 
