@@ -46,3 +46,14 @@
    versions of identity and composition and if there's a performance
    hit.
  + [X] Correct parse order for ~/~
+ + [-] Unit Arithmetic
+   - [X] Generalize the radians / degrees system
+   - [ ] Use the generalized system in ~Data.Calc.Unit.Radians~
+   - [ ] Basic one-dimensional unit conversion
+   - [ ] All of the actual units (in one dimension)
+   - [ ] Unit synonyms (~L~, etc.)
+   - [ ] Full higher dimensional units
+   - [ ] Be "smart": e.g. if I ask to convert ~m / s^2~ to ~hr~, give
+     me ~m / hr^2~.
+   - [ ] Temperature stuff
+   - [ ] Move the conversion function to a file ~Data.Calc.Function.Units~

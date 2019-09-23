@@ -11,6 +11,7 @@ import Data.Calc.Function.Approximate
 import qualified Data.Calc.Function.Trigonometry as Trig
 import qualified Data.Calc.Function.Transcendental as Trans
 import qualified Data.Calc.Function.Combinatorial as Comb
+import qualified Data.Calc.Unit.Table as Unit -- TODO Move the necessary stuff to Data.Calc.Function.*
 import Data.Calc.Calculus.Derivative
 
 import Data.Map(Map)
@@ -35,7 +36,8 @@ stdBuiltins = compileFns [
             Trans.flog, Trans.fexp, Trans.fsqrt,
             Comb.ffact, Comb.fdfact, Comb.fncr, Comb.fnpr, Comb.fgcd, Comb.flcm,
             approx stdBuiltins,
-            derivativeFn stdBuiltins
+            derivativeFn stdBuiltins,
+            Unit.simpleConvert
            ]
 
 applyToStd :: MonadReader ModeInfo m => String -> [Expr Prim] -> m (Expr Prim)

@@ -16,6 +16,7 @@ import Data.Calc.Normalize
 import Data.Calc.Parse
 import Data.Calc.Mode
 import Data.Calc.Function
+import Data.Calc.Unit.Table()
 import System.CmdArgs
 
 import Control.Monad

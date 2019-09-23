@@ -45,7 +45,7 @@ complexNumber = do
 
 var :: Parser String
 var = (:) <$> varStartChar <*> many varChar
-    where varStartChar = letter
+    where varStartChar = letter <|> char '_'
           varChar = varStartChar <|> digit
 
 arglist :: Parser [Expr Prim]
