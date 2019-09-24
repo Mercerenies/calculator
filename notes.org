@@ -48,6 +48,7 @@
  + [X] Correct parse order for ~/~
  + [-] Unit Arithmetic
    - [X] Generalize the radians / degrees system
+   - [ ] Some more standard units
    - [ ] Use the generalized system in ~Data.Calc.Unit.Radians~
    - [ ] Basic one-dimensional unit conversion
    - [ ] All of the actual units (in one dimension)

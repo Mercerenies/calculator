@@ -7,11 +7,16 @@ import Data.Calc.Unit.Dimension
 import Data.Calc.Function.Type
 import Data.Calc.Expr
 import Data.Calc.Util
+import Data.Calc.Number
 
+import Data.Ratio
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Control.Monad.Reader
 import Control.Arrow
+
+-- A lot of the measurements in this file are from the Emacs Calc
+-- units table.
 
 multiplyBy :: Expr a -> Expr a -> Expr a
 multiplyBy x y = Compound "*" [x, y]
@@ -53,23 +58,31 @@ expandSIPrefixes (Unit {..}) = fmap go prefixes
                       ("z", -21),
                       ("y", -24)]
 
-radians :: Unit (Expr Prim) (Expr Prim)
-radians = Unit "rad" Angle id id
+radians, degrees,
+ meters, inches, feet, yards, miles, astrounits, lightyears, parsecs,
+ seconds, seconds', minutes, hours, days, weeks, years
+    :: Unit (Expr Prim) (Expr Prim)
 
-degrees :: Unit (Expr Prim) (Expr Prim)
+radians = Unit "rad" Angle id id
 degrees = unitByFactor "deg" Angle $ Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
 
-meters :: Unit (Expr Prim) (Expr Prim)
 meters = Unit "m" Length id id
+inches = unitByFactor "in" Length $ Constant (PrimNum . NRatio $ 10000 % 254)
+feet = unitByFactor "ft" Length $ Constant (PrimNum . NRatio $ 10000 % 3048)
+yards = unitByFactor "yd" Length $ Constant (PrimNum . NRatio $ 10000 % 9144)
+miles = unitByFactor "mi" Length $ Constant (PrimNum . NRatio $ 1000 % 1609344)
+astrounits = unitByFactor "au" Length $ Constant (PrimNum . NRatio $ 1 % 149597870700)
+lightyears = unitByFactor "lyr" Length $ Constant (PrimNum . NRatio $ 1 % 9460730472580800)
+parsecs = unitByFactor "pc" Length $ Compound "/" [Constant (PrimVar "pi"),
+                                                   Constant (PrimNum 96939420213600000)]
 
-seconds :: Unit (Expr Prim) (Expr Prim)
 seconds = Unit "s" Time id id
-
-seconds' :: Unit (Expr Prim) (Expr Prim)
 seconds' = synonym "sec" seconds
-
-minutes :: Unit (Expr Prim) (Expr Prim)
 minutes = unitByFactor "min" Time . recipOf $ Constant (PrimNum 60)
+hours = unitByFactor "hr" Time . recipOf $ Constant (PrimNum 3600)
+days = unitByFactor "day" Time . recipOf $ Constant (PrimNum 86400)
+weeks = unitByFactor "wk" Time . recipOf $ Constant (PrimNum 604800)
+years = unitByFactor "yr" Time . recipOf $ Constant (PrimNum 31557600)
 
 compileUnits :: [Unit b a] -> Map String (Unit b a)
 compileUnits = map (unitName &&& id) >>> Map.fromList
@@ -82,10 +95,11 @@ table = compileUnits $ concat [
 
          -- Length units
          expandSIPrefixes meters,
+         [inches, feet, yards, miles, astrounits, lightyears, parsecs],
 
         -- Time units
          expandSIPrefixes seconds,
-         [seconds', minutes]
+         [seconds', minutes, hours, days, weeks, years]
 
         ]
 
