@@ -4,7 +4,7 @@ module Data.Calc.Unit.Type(Unit(..), UnitalValue(..),
                            unsafeConvertTo, unsafeConvert,
                            convertTo, convert) where
 
-import Data.Calc.Unit.Dimension
+import Data.Calc.Unit.Dimension(Dimension)
 
 data Unit b a = Unit {
       unitName :: String,

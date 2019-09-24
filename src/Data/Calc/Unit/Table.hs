@@ -3,7 +3,7 @@
 module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table, simpleConvert) where
 
 import Data.Calc.Unit.Type
-import Data.Calc.Unit.Dimension
+import qualified Data.Calc.Unit.Dimension as Dim
 import Data.Calc.Function.Type
 import Data.Calc.Expr
 import Data.Calc.Util
@@ -24,7 +24,7 @@ multiplyBy x y = Compound "*" [x, y]
 recipOf :: Expr Prim -> Expr Prim
 recipOf n = Compound "/" [Constant $ PrimNum 1, n]
 
-unitByFactor :: String -> Dimension -> Expr Prim -> Unit (Expr Prim) (Expr Prim)
+unitByFactor :: String -> Dim.Dimension -> Expr Prim -> Unit (Expr Prim) (Expr Prim)
 unitByFactor name dim factor =
     Unit name dim (multiplyBy $ recipOf factor) (multiplyBy factor)
 
@@ -63,26 +63,27 @@ radians, degrees,
  seconds, seconds', minutes, hours, days, weeks, years
     :: Unit (Expr Prim) (Expr Prim)
 
-radians = Unit "rad" Angle id id
-degrees = unitByFactor "deg" Angle $ Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
+radians = Unit "rad" Dim.angle id id
+degrees = unitByFactor "deg" Dim.angle $
+          Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
 
-meters = Unit "m" Length id id
-inches = unitByFactor "in" Length $ Constant (PrimNum . NRatio $ 10000 % 254)
-feet = unitByFactor "ft" Length $ Constant (PrimNum . NRatio $ 10000 % 3048)
-yards = unitByFactor "yd" Length $ Constant (PrimNum . NRatio $ 10000 % 9144)
-miles = unitByFactor "mi" Length $ Constant (PrimNum . NRatio $ 1000 % 1609344)
-astrounits = unitByFactor "au" Length $ Constant (PrimNum . NRatio $ 1 % 149597870700)
-lightyears = unitByFactor "lyr" Length $ Constant (PrimNum . NRatio $ 1 % 9460730472580800)
-parsecs = unitByFactor "pc" Length $ Compound "/" [Constant (PrimVar "pi"),
+meters = Unit "m" Dim.length id id
+inches = unitByFactor "in" Dim.length $ Constant (PrimNum . NRatio $ 10000 % 254)
+feet = unitByFactor "ft" Dim.length $ Constant (PrimNum . NRatio $ 10000 % 3048)
+yards = unitByFactor "yd" Dim.length $ Constant (PrimNum . NRatio $ 10000 % 9144)
+miles = unitByFactor "mi" Dim.length $ Constant (PrimNum . NRatio $ 1000 % 1609344)
+astrounits = unitByFactor "au" Dim.length $ Constant (PrimNum . NRatio $ 1 % 149597870700)
+lightyears = unitByFactor "lyr" Dim.length $ Constant (PrimNum . NRatio $ 1 % 9460730472580800)
+parsecs = unitByFactor "pc" Dim.length $ Compound "/" [Constant (PrimVar "pi"),
                                                    Constant (PrimNum 96939420213600000)]
 
-seconds = Unit "s" Time id id
+seconds = Unit "s" Dim.time id id
 seconds' = synonym "sec" seconds
-minutes = unitByFactor "min" Time . recipOf $ Constant (PrimNum 60)
-hours = unitByFactor "hr" Time . recipOf $ Constant (PrimNum 3600)
-days = unitByFactor "day" Time . recipOf $ Constant (PrimNum 86400)
-weeks = unitByFactor "wk" Time . recipOf $ Constant (PrimNum 604800)
-years = unitByFactor "yr" Time . recipOf $ Constant (PrimNum 31557600)
+minutes = unitByFactor "min" Dim.time . recipOf $ Constant (PrimNum 60)
+hours = unitByFactor "hr" Dim.time . recipOf $ Constant (PrimNum 3600)
+days = unitByFactor "day" Dim.time . recipOf $ Constant (PrimNum 86400)
+weeks = unitByFactor "wk" Dim.time . recipOf $ Constant (PrimNum 604800)
+years = unitByFactor "yr" Dim.time . recipOf $ Constant (PrimNum 31557600)
 
 compileUnits :: [Unit b a] -> Map String (Unit b a)
 compileUnits = map (unitName &&& id) >>> Map.fromList

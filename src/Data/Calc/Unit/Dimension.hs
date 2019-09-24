@@ -1,17 +1,35 @@
 {-# LANGUAGE DataKinds, KindSignatures #-}
 
-module Data.Calc.Unit.Dimension where
+module Data.Calc.Unit.Dimension(SimpleDim(..), Dimension(..),
+                                singleton, unitless, (.*), recip, (./),
+                                angle, length, time) where
 
-data Dimension = Angle | Length | Time
+import Data.Map(Map)
+import qualified Data.Map as Map
+import Prelude hiding (recip, length)
+
+data SimpleDim = Angle | Length | Time
                  deriving (Show, Read, Eq, Ord, Enum)
 
--- TODO I guess we don't really need the KnownDim magic anymore.
+newtype Dimension = Dimension (Map SimpleDim Int)
+    deriving (Show, Read, Eq)
 
-class KnownDim (d :: Dimension) where
-    runDim :: proxy d -> Dimension
+singleton :: SimpleDim -> Dimension
+singleton dim = Dimension $ Map.singleton dim 1
 
-instance KnownDim 'Angle where
-    runDim _ = Angle
+unitless :: Dimension
+unitless = Dimension Map.empty
 
-instance KnownDim 'Length where
-    runDim _ = Length
+(.*) :: Dimension -> Dimension -> Dimension
+Dimension a .* Dimension b = Dimension $ Map.unionWith (+) a b
+
+recip :: Dimension -> Dimension
+recip (Dimension a) = Dimension (fmap negate a)
+
+(./) :: Dimension -> Dimension -> Dimension
+a ./ b = a .* recip b
+
+angle, length, time :: Dimension
+angle = singleton Angle
+length = singleton Length
+time = singleton Time
