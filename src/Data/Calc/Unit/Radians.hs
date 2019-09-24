@@ -4,8 +4,16 @@ module Data.Calc.Unit.Radians where
 
 import Data.Calc.Mode
 import Data.Calc.Expr
+import Data.Calc.Unit.Type
+import Data.Calc.Unit.Table
 
 import Control.Monad.Reader
+
+-- TODO Use Data.Calc.Unit.Table for these
+
+angularModeToUnit :: AngularMode -> Unit (Expr Prim) (Expr Prim)
+angularModeToUnit Degrees = degrees
+angularModeToUnit Radians = radians
 
 thetaToRad :: (Floating a, MonadReader ModeInfo m) => a -> m a
 thetaToRad x = fmap (x *) thetaToRadFactor

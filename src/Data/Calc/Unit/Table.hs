@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Data.Calc.Unit.Table where
+module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table, simpleConvert) where
 
 import Data.Calc.Unit.Type
 import Data.Calc.Unit.Dimension
