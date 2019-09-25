@@ -1,12 +1,13 @@
 {-# LANGUAGE DataKinds, KindSignatures #-}
 
 module Data.Calc.Unit.Dimension(SimpleDim(..), Dimension(..),
-                                singleton, unitless, (.*), recip, (./),
+                                singleton, unitless, mul, recip, div,
                                 angle, length, time) where
 
+import Data.Semigroup
 import Data.Map(Map)
 import qualified Data.Map as Map
-import Prelude hiding (recip, length)
+import Prelude hiding (recip, length, div)
 
 data SimpleDim = Angle | Length | Time
                  deriving (Show, Read, Eq, Ord, Enum)
@@ -14,20 +15,27 @@ data SimpleDim = Angle | Length | Time
 newtype Dimension = Dimension (Map SimpleDim Int)
     deriving (Show, Read, Eq)
 
+instance Semigroup Dimension where
+    (<>) = mul
+
+instance Monoid Dimension where
+    mempty = unitless
+    mappend = (<>)
+
 singleton :: SimpleDim -> Dimension
 singleton dim = Dimension $ Map.singleton dim 1
 
 unitless :: Dimension
 unitless = Dimension Map.empty
 
-(.*) :: Dimension -> Dimension -> Dimension
-Dimension a .* Dimension b = Dimension $ Map.unionWith (+) a b
+mul :: Dimension -> Dimension -> Dimension
+Dimension a `mul` Dimension b = Dimension $ Map.unionWith (+) a b
 
 recip :: Dimension -> Dimension
 recip (Dimension a) = Dimension (fmap negate a)
 
-(./) :: Dimension -> Dimension -> Dimension
-a ./ b = a .* recip b
+div :: Dimension -> Dimension -> Dimension
+a `div` b = a `mul` recip b
 
 angle, length, time :: Dimension
 angle = singleton Angle

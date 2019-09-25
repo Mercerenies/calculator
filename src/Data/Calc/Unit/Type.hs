@@ -2,9 +2,13 @@
 module Data.Calc.Unit.Type(Unit(..), UnitalValue(..),
                            baseUnit, toBaseUnit,
                            unsafeConvertTo, unsafeConvert,
-                           convertTo, convert) where
+                           convertTo, convert, (.*), (./), recip) where
 
 import Data.Calc.Unit.Dimension(Dimension)
+import qualified Data.Calc.Unit.Dimension as Dim
+
+import Prelude hiding (id, (.))
+import Control.Category
 
 data Unit b a = Unit {
       unitDim :: Dimension,
@@ -16,6 +20,10 @@ data UnitalValue b a = UnitalValue {
       valueUnit :: Unit b a,
       valueValue :: a
     }
+
+instance Category Unit where
+    id = baseUnit Dim.unitless
+    (.) = flip (.*)
 
 baseUnit :: Dimension -> Unit a a
 baseUnit d = Unit d id id
@@ -37,3 +45,12 @@ unsafeConvert u u' a = valueValue $ unsafeConvertTo u' (UnitalValue u a)
 
 convert :: Unit b a -> Unit b a' -> a -> Maybe a'
 convert u u' a = valueValue <$> convertTo u' (UnitalValue u a)
+
+(.*) :: Unit c b -> Unit b a -> Unit c a
+Unit d t f .* Unit d' t' f' = Unit (Dim.mul d d') (t . t') (f' . f)
+
+invUnit :: Unit b a -> Unit a b
+invUnit (Unit d t f) = Unit (Dim.recip d) f t
+
+(./) :: Unit c b -> Unit a b -> Unit c a
+u ./ u' = u .* invUnit u'
