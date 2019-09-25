@@ -2,7 +2,7 @@
 module Data.Calc.Unit.Type(Unit(..), UnitalValue(..),
                            baseUnit, toBaseUnit,
                            unsafeConvertTo, unsafeConvert,
-                           convertTo, convert, (.*), (./), recip) where
+                           convertTo, convert, (.*), (./), recip, (.^)) where
 
 import Data.Calc.Unit.Dimension(Dimension)
 import qualified Data.Calc.Unit.Dimension as Dim
@@ -54,3 +54,9 @@ invUnit (Unit d t f) = Unit (Dim.recip d) f t
 
 (./) :: Unit c b -> Unit a b -> Unit c a
 u ./ u' = u .* invUnit u'
+
+(.^) :: Unit a a -> Int -> Unit a a
+u .^ n
+    | n < 0 = invUnit u .^ (- n)
+    | otherwise = foldr (.) id $ replicate n u
+

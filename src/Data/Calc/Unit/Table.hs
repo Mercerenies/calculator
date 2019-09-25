@@ -3,6 +3,7 @@
 module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table, simpleConvert) where
 
 import Data.Calc.Unit.Type
+import Data.Calc.Unit.Parse
 import qualified Data.Calc.Unit.Dimension as Dim
 import Data.Calc.Function.Type
 import Data.Calc.Expr
@@ -107,7 +108,7 @@ table = Map.fromList $ concat [
 simpleConvert :: Monad m => Function m
 simpleConvert = function "__conv" go
     where go = do
-            [expr, Constant (PrimVar old), Constant (PrimVar new)] <- ask
-            old' <- maybeToFail $ Map.lookup old table
-            new' <- maybeToFail $ Map.lookup new table
+            [expr, old, new] <- ask
+            old' <- parseUnits table old
+            new' <- parseUnits table new
             maybeToFail $ convert old' new' expr
