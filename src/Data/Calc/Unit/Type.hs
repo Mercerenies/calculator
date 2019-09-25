@@ -59,4 +59,3 @@ u ./ u' = u .* invUnit u'
 u .^ n
     | n < 0 = invUnit u .^ (- n)
     | otherwise = foldr (.) id $ replicate n u
-

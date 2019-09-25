@@ -10,6 +10,7 @@ import Data.Calc.Expr
 import Data.Calc.Util
 import Data.Calc.Number
 
+import Data.Semigroup
 import Data.Ratio
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -31,7 +32,7 @@ unitByFactor dim factor =
 expandSIPrefixes :: (String, Unit (Expr Prim) (Expr Prim)) -> [(String, Unit (Expr Prim) (Expr Prim))]
 expandSIPrefixes (name, Unit {..}) = fmap go prefixes
     where go (prefix, n) =
-              let n' = Constant . PrimNum $ 10 ^ n
+              let n' = Constant . PrimNum $ 10 ^^ n
               in (prefix ++ name, Unit unitDim (multiplyBy n' . unitToBase)
                                                (unitFromBase . multiplyBy (recipOf n')))
           prefixes :: [(String, Integer)]
@@ -60,7 +61,8 @@ expandSIPrefixes (name, Unit {..}) = fmap go prefixes
 
 radians, degrees,
  meters, inches, feet, yards, miles, astrounits, lightyears, parsecs,
- seconds, seconds', minutes, hours, days, weeks, years
+ seconds, seconds', minutes, hours, days, weeks, years,
+ liters
     :: (String, Unit (Expr Prim) (Expr Prim))
 
 radians = ("rad", Unit Dim.angle id id)
@@ -85,6 +87,8 @@ days = ("day", unitByFactor Dim.time . recipOf $ Constant (PrimNum 86400))
 weeks = ("wk", unitByFactor Dim.time . recipOf $ Constant (PrimNum 604800))
 years = ("yr", unitByFactor Dim.time . recipOf $ Constant (PrimNum 31557600))
 
+liters = ("L", unitByFactor ((3 :: Int) `stimes` Dim.length) $ Constant (PrimNum . NRatio $ 1000 % 1))
+
 table :: Map String (Unit (Expr Prim) (Expr Prim))
 table = Map.fromList $ concat [
 
@@ -97,7 +101,10 @@ table = Map.fromList $ concat [
 
         -- Time units
          expandSIPrefixes seconds,
-         [seconds', minutes, hours, days, weeks, years]
+         [seconds', minutes, hours, days, weeks, years],
+
+         -- Volume units
+         expandSIPrefixes liters
 
         ]
 
