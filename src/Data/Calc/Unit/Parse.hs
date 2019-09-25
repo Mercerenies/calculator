@@ -4,6 +4,7 @@ module Data.Calc.Unit.Parse where
 import Data.Calc.Expr
 import Data.Calc.Util
 import Data.Calc.Unit.Type
+import Data.Calc.Unit.Dimension(unitless)
 import Data.Calc.Coerce
 
 import Prelude hiding (fail, id, (.))
@@ -19,6 +20,8 @@ parseUnits m = go
     where go (Constant (PrimVar x))
               | Just u <- lookup' x = pure u
               | otherwise = fail $ "unknown unit " ++ x
+          go (x @ (Constant (PrimNum _))) =
+              pure $ Unit unitless (\y -> Compound "*" [y, x]) (\y -> Compound "/" [y, x])
           go (Compound "*" xs) = fmap (foldl (.*) id) $ mapM go xs
           go (Compound "/" [a, b]) = liftA2 (./) (go a) (go b)
           go (Compound "^" [a, b])
