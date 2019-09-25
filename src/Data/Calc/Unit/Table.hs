@@ -13,7 +13,6 @@ import Data.Ratio
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Control.Monad.Reader
-import Control.Arrow
 
 -- A lot of the measurements in this file are from the Emacs Calc
 -- units table.
@@ -24,16 +23,16 @@ multiplyBy x y = Compound "*" [x, y]
 recipOf :: Expr Prim -> Expr Prim
 recipOf n = Compound "/" [Constant $ PrimNum 1, n]
 
-unitByFactor :: String -> Dim.Dimension -> Expr Prim -> Unit (Expr Prim) (Expr Prim)
-unitByFactor name dim factor =
-    Unit name dim (multiplyBy $ recipOf factor) (multiplyBy factor)
+unitByFactor :: Dim.Dimension -> Expr Prim -> Unit (Expr Prim) (Expr Prim)
+unitByFactor dim factor =
+    Unit dim (multiplyBy $ recipOf factor) (multiplyBy factor)
 
-expandSIPrefixes :: Unit (Expr Prim) (Expr Prim) -> [Unit (Expr Prim) (Expr Prim)]
-expandSIPrefixes (Unit {..}) = fmap go prefixes
+expandSIPrefixes :: (String, Unit (Expr Prim) (Expr Prim)) -> [(String, Unit (Expr Prim) (Expr Prim))]
+expandSIPrefixes (name, Unit {..}) = fmap go prefixes
     where go (prefix, n) =
               let n' = Constant . PrimNum $ 10 ^ n
-              in Unit (prefix ++ unitName) unitDim (multiplyBy n' . unitToBase)
-                                                   (unitFromBase . multiplyBy (recipOf n'))
+              in (prefix ++ name, Unit unitDim (multiplyBy n' . unitToBase)
+                                               (unitFromBase . multiplyBy (recipOf n')))
           prefixes :: [(String, Integer)]
           prefixes = [("Y",  24),
                       ("Z",  21),
@@ -61,35 +60,32 @@ expandSIPrefixes (Unit {..}) = fmap go prefixes
 radians, degrees,
  meters, inches, feet, yards, miles, astrounits, lightyears, parsecs,
  seconds, seconds', minutes, hours, days, weeks, years
-    :: Unit (Expr Prim) (Expr Prim)
+    :: (String, Unit (Expr Prim) (Expr Prim))
 
-radians = Unit "rad" Dim.angle id id
-degrees = unitByFactor "deg" Dim.angle $
-          Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")]
+radians = ("rad", Unit Dim.angle id id)
+degrees = ("deg", unitByFactor Dim.angle $
+                  Compound "/" [Constant (PrimNum 180), Constant (PrimVar "pi")])
 
-meters = Unit "m" Dim.length id id
-inches = unitByFactor "in" Dim.length $ Constant (PrimNum . NRatio $ 10000 % 254)
-feet = unitByFactor "ft" Dim.length $ Constant (PrimNum . NRatio $ 10000 % 3048)
-yards = unitByFactor "yd" Dim.length $ Constant (PrimNum . NRatio $ 10000 % 9144)
-miles = unitByFactor "mi" Dim.length $ Constant (PrimNum . NRatio $ 1000 % 1609344)
-astrounits = unitByFactor "au" Dim.length $ Constant (PrimNum . NRatio $ 1 % 149597870700)
-lightyears = unitByFactor "lyr" Dim.length $ Constant (PrimNum . NRatio $ 1 % 9460730472580800)
-parsecs = unitByFactor "pc" Dim.length $ Compound "/" [Constant (PrimVar "pi"),
-                                                   Constant (PrimNum 96939420213600000)]
+meters = ("m", Unit Dim.length id id)
+inches = ("in", unitByFactor Dim.length $ Constant (PrimNum . NRatio $ 10000 % 254))
+feet = ("ft", unitByFactor Dim.length $ Constant (PrimNum . NRatio $ 10000 % 3048))
+yards = ("yd", unitByFactor Dim.length $ Constant (PrimNum . NRatio $ 10000 % 9144))
+miles = ("mi", unitByFactor Dim.length $ Constant (PrimNum . NRatio $ 1000 % 1609344))
+astrounits = ("au", unitByFactor Dim.length $ Constant (PrimNum . NRatio $ 1 % 149597870700))
+lightyears = ("lyr", unitByFactor Dim.length $ Constant (PrimNum . NRatio $ 1 % 9460730472580800))
+parsecs = ("pc", unitByFactor Dim.length $ Compound "/" [Constant (PrimVar "pi"),
+                                                         Constant (PrimNum 96939420213600000)])
 
-seconds = Unit "s" Dim.time id id
-seconds' = synonym "sec" seconds
-minutes = unitByFactor "min" Dim.time . recipOf $ Constant (PrimNum 60)
-hours = unitByFactor "hr" Dim.time . recipOf $ Constant (PrimNum 3600)
-days = unitByFactor "day" Dim.time . recipOf $ Constant (PrimNum 86400)
-weeks = unitByFactor "wk" Dim.time . recipOf $ Constant (PrimNum 604800)
-years = unitByFactor "yr" Dim.time . recipOf $ Constant (PrimNum 31557600)
-
-compileUnits :: [Unit b a] -> Map String (Unit b a)
-compileUnits = map (unitName &&& id) >>> Map.fromList
+seconds = ("s", Unit Dim.time id id)
+seconds' = ("sec", snd seconds) -- Yes, this line reads "seconds prime is second second seconds" :)
+minutes = ("min", unitByFactor Dim.time . recipOf $ Constant (PrimNum 60))
+hours = ("hr", unitByFactor Dim.time . recipOf $ Constant (PrimNum 3600))
+days = ("day", unitByFactor Dim.time . recipOf $ Constant (PrimNum 86400))
+weeks = ("wk", unitByFactor Dim.time . recipOf $ Constant (PrimNum 604800))
+years = ("yr", unitByFactor Dim.time . recipOf $ Constant (PrimNum 31557600))
 
 table :: Map String (Unit (Expr Prim) (Expr Prim))
-table = compileUnits $ concat [
+table = Map.fromList $ concat [
 
          -- Angular units
          [radians, degrees],

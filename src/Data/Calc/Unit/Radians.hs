@@ -12,8 +12,8 @@ import Control.Monad.Reader
 -- TODO Use Data.Calc.Unit.Table for these
 
 angularModeToUnit :: AngularMode -> Unit (Expr Prim) (Expr Prim)
-angularModeToUnit Degrees = degrees
-angularModeToUnit Radians = radians
+angularModeToUnit Degrees = snd degrees
+angularModeToUnit Radians = snd radians
 
 thetaToRad :: (Floating a, MonadReader ModeInfo m) => a -> m a
 thetaToRad x = fmap (x *) thetaToRadFactor
