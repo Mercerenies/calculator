@@ -31,7 +31,7 @@ formulaShowsPrec n (Compound h ts) =
               (name ++) . formulaShowsPrec prec a
           internal Postfix name [a] prec =
               formulaShowsPrec prec a . (name ++)
-          internal _ name args _ = showsAsFunction name args
+          internal _ _ args _ = showsAsFunction h args
 
 formulaShows :: Show a => Expr a -> ShowS
 formulaShows = formulaShowsPrec 0
