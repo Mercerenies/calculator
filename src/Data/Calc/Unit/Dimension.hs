@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, KindSignatures #-}
 
-module Data.Calc.Unit.Dimension(SimpleDim(..), Dimension(..),
+module Data.Calc.Unit.Dimension(SimpleDim(..), Dimension(),
                                 singleton, unitless, mul, recip, div,
                                 angle, length, time) where
 
@@ -22,6 +22,9 @@ instance Monoid Dimension where
     mempty = unitless
     mappend = (<>)
 
+normalize :: Dimension -> Dimension
+normalize (Dimension m) = Dimension $ Map.filter (/= 0) m
+
 singleton :: SimpleDim -> Dimension
 singleton dim = Dimension $ Map.singleton dim 1
 
@@ -29,10 +32,10 @@ unitless :: Dimension
 unitless = Dimension Map.empty
 
 mul :: Dimension -> Dimension -> Dimension
-Dimension a `mul` Dimension b = Dimension $ Map.unionWith (+) a b
+Dimension a `mul` Dimension b = normalize . Dimension $ Map.unionWith (+) a b
 
 recip :: Dimension -> Dimension
-recip (Dimension a) = Dimension (fmap negate a)
+recip (Dimension a) = normalize $ Dimension (fmap negate a)
 
 div :: Dimension -> Dimension -> Dimension
 a `div` b = a `mul` recip b
