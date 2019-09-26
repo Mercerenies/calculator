@@ -3,7 +3,7 @@ module Data.Calc.Function.Unit(uconvert) where
 
 import Data.Calc.Unit.Table
 import Data.Calc.Unit.Type
-import Data.Calc.Unit.Parse
+import Data.Calc.Unit.Parse(parseUnits)
 import Data.Calc.Function.Type
 import Data.Calc.Util
 import Data.Calc.Expr
