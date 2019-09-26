@@ -10,11 +10,13 @@ import Data.Calc.Expr
 import Data.Calc.Util
 import Data.Calc.Number
 
+import Prelude hiding (fail)
 import Data.Semigroup
 import Data.Ratio
 import Data.Map(Map)
 import qualified Data.Map as Map
-import Control.Monad.Reader
+import Control.Monad.Reader hiding (fail)
+import Control.Monad.Fail
 
 -- A lot of the measurements in this file are from the Emacs Calc
 -- units table.
@@ -115,7 +117,10 @@ table = Map.fromList $ concat [
 simpleConvert :: Monad m => Function m
 simpleConvert = function "__conv" go
     where go = do
-            [expr, old, new] <- ask
+            (expr, old, new) <- ask >>= parseArgs
             old' <- parseUnits table old
             new' <- parseUnits table new
             maybeToFail $ convert old' new' expr
+          parseArgs [expr, old, new] = pure (expr, old, new)
+          parseArgs [old, new] = pure (Constant (PrimNum 1), old, new)
+          parseArgs _ = fail "invalid args to __conv"
