@@ -1,22 +1,16 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table, simpleConvert) where
+module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table) where
 
 import Data.Calc.Unit.Type
-import Data.Calc.Unit.Parse
 import qualified Data.Calc.Unit.Dimension as Dim
-import Data.Calc.Function.Type
 import Data.Calc.Expr
-import Data.Calc.Util
 import Data.Calc.Number
 
-import Prelude hiding (fail)
 import Data.Semigroup
 import Data.Ratio
 import Data.Map(Map)
 import qualified Data.Map as Map
-import Control.Monad.Reader hiding (fail)
-import Control.Monad.Fail
 
 -- A lot of the measurements in this file are from the Emacs Calc
 -- units table.
@@ -109,18 +103,3 @@ table = Map.fromList $ concat [
          expandSIPrefixes liters
 
         ]
-
--- This is a cheap and dirty covert function. It's just for me to test
--- things right now.
---
--- TODO Clean it up and put it somewhere under Data.Calc.Function.*
-simpleConvert :: Monad m => Function m
-simpleConvert = function "__conv" go
-    where go = do
-            (expr, old, new) <- ask >>= parseArgs
-            old' <- parseUnits table old
-            new' <- parseUnits table new
-            maybeToFail $ convert old' new' expr
-          parseArgs [expr, old, new] = pure (expr, old, new)
-          parseArgs [old, new] = pure (Constant (PrimNum 1), old, new)
-          parseArgs _ = fail "invalid args to __conv"

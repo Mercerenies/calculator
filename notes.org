@@ -50,11 +50,13 @@
    - [X] Generalize the radians / degrees system
    - [ ] Some more standard units
    - [ ] Use the generalized system in ~Data.Calc.Unit.Radians~
-   - [ ] Basic one-dimensional unit conversion
+   - [X] Basic one-dimensional unit conversion
    - [ ] All of the actual units (in one dimension)
-   - [ ] Unit synonyms (~L~, etc.)
-   - [ ] Full higher dimensional units
+   - [X] Unit synonyms (~L~, etc.)
+   - [X] Full higher dimensional units
    - [ ] Be "smart": e.g. if I ask to convert ~m / s^2~ to ~hr~, give
      me ~m / hr^2~.
    - [ ] Temperature stuff
-   - [ ] Move the conversion function to a file ~Data.Calc.Function.Units~
+   - [X] Move the conversion function to a file ~Data.Calc.Function.Units~
+** Sept 25, 2019
+ + [ ] Juxtaposition should count as multiplication if it is numbers or variables
