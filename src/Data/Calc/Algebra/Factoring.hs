@@ -31,7 +31,8 @@ collectTerms match coalesce xs = leftover ++ map coalesce' (Map.toList matched)
           coalesce' = uncurry coalesce
 
 instance Semigroup FractionBar where
-    Denominator <> _ = Denominator
+    Denominator <> Numerator = Denominator
+    Denominator <> Denominator = Numerator
     Numerator   <> x = x
 
 instance Monoid FractionBar where
