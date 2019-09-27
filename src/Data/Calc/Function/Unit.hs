@@ -1,5 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
 
-module Data.Calc.Function.Unit(uconvert) where
+module Data.Calc.Function.Unit(uconvert, ucanon) where
 
 import Data.Calc.Unit.Table
 import Data.Calc.Unit.Type
@@ -7,8 +8,10 @@ import Data.Calc.Unit.Parse(parseUnits)
 import Data.Calc.Function.Type
 import Data.Calc.Util
 import Data.Calc.Expr
+import Data.Calc.Pass
+import Data.Calc.Mode
 
-import Prelude hiding (fail)
+import Prelude hiding (id, (.), fail)
 import Control.Monad.Reader hiding (fail)
 import Control.Monad.Fail
 
@@ -47,3 +50,18 @@ uconvert = function "uconvert" go
           parseArgs [expr, old, new] = pure (ArgsExplicit, expr, old, new)
           parseArgs [old, new] = pure (ArgsImplicit, Constant (PrimNum 1), old, new)
           parseArgs _ = fail "invalid args to uconvert"
+
+-- ucanon(expr)
+ucanon :: MonadReader ModeInfo m => Function m
+ucanon = function "ucanon" go
+    where go = do
+            [expr] <- ask
+            lift . lift $ runPassOnceBUM canonicalizePass expr
+          canonicalizePass = PassT canonicalize
+          canonicalize x =
+              case parseUnits table x of
+                Nothing -> pure x
+                Just x' -> let (e, u) = canonical $ unitDim x'
+                           in case convert x' u (Constant (PrimNum 1)) of
+                                Nothing -> pure x
+                                Just x'' -> pure $ Compound "*" [x'', e]

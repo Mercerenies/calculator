@@ -1,13 +1,10 @@
 
-module Data.Calc.Unit.Parse(NamedUnit(..), FractionalUnit(..),
-                            one, mul, div, pow, fracToUnit, fracDim,
-                            parseFracUnits,
-                            parseUnits) where
+module Data.Calc.Unit.Parse(parseUnits) where
 
 import Data.Calc.Expr
 import Data.Calc.Util
 import Data.Calc.Unit.Type
-import Data.Calc.Unit.Dimension(Dimension, unitless)
+import Data.Calc.Unit.Dimension(unitless)
 import Data.Calc.Coerce
 
 import Prelude hiding (fail, id, (.), div)
@@ -42,8 +39,8 @@ fracToUnit (FractionalUnit u n d) = u .* (n' ./ d')
           n' = foldl (.*) id $ map unNamedUnit n
           d' = foldl (.*) id $ map unNamedUnit d
 
-fracDim :: FractionalUnit a a -> Dimension
-fracDim = unitDim . fracToUnit
+--fracDim :: FractionalUnit a a -> Dimension
+--fracDim = unitDim . fracToUnit
 
 parseFracUnits :: MonadFail m => Map String (Unit (Expr Prim) (Expr Prim)) -> Expr Prim ->
                   m (FractionalUnit (Expr Prim) (Expr Prim))

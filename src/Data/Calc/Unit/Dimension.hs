@@ -2,7 +2,8 @@
 
 module Data.Calc.Unit.Dimension(SimpleDim(..), Dimension(),
                                 singleton, unitless, mul, recip, div,
-                                angle, length, time) where
+                                angle, length, time,
+                                toList) where
 
 import Data.Semigroup
 import Data.Map(Map)
@@ -44,3 +45,6 @@ angle, length, time :: Dimension
 angle = singleton Angle
 length = singleton Length
 time = singleton Time
+
+toList :: Dimension -> [(SimpleDim, Int)]
+toList (Dimension d) = Map.toList d

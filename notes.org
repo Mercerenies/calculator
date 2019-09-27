@@ -58,6 +58,6 @@
      me ~m / hr^2~.
    - [ ] Temperature stuff
    - [X] Move the conversion function to a file ~Data.Calc.Function.Units~
-   - [ ] Unit simplification
+   - [X] Unit simplification
 ** Sept 25, 2019
  + [ ] Juxtaposition should count as multiplication if it is numbers or variables

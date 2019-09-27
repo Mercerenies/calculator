@@ -1,12 +1,16 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table) where
+module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table,
+                            simpleCanonical, canonical) where
 
 import Data.Calc.Unit.Type
 import qualified Data.Calc.Unit.Dimension as Dim
 import Data.Calc.Expr
 import Data.Calc.Number
 
+import Prelude hiding (id, (.))
+import Control.Category
+import Control.Arrow
 import Data.Semigroup
 import Data.Ratio
 import Data.Map(Map)
@@ -103,3 +107,16 @@ table = Map.fromList $ concat [
          expandSIPrefixes liters
 
         ]
+
+simpleCanonical :: Dim.SimpleDim -> (Expr Prim, Unit (Expr Prim) (Expr Prim))
+simpleCanonical d = (Constant . PrimVar *** id) $ case d of
+                                                    Dim.Angle -> radians
+                                                    Dim.Length -> meters
+                                                    Dim.Time -> seconds
+
+canonical :: Dim.Dimension -> (Expr Prim, Unit (Expr Prim) (Expr Prim))
+canonical = foldl go base . map extract . Dim.toList
+    where extract (d, i) = let (s, u) = simpleCanonical d
+                           in (Compound "^" [s, Constant (PrimNum $ fromIntegral i)], u .^ i)
+          base = (Constant $ PrimNum 1, id)
+          go (s, u) (s', u') = (Compound "*" [s, s'], u .* u')

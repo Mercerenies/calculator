@@ -37,7 +37,7 @@ stdBuiltins = compileFns [
             Comb.ffact, Comb.fdfact, Comb.fncr, Comb.fnpr, Comb.fgcd, Comb.flcm,
             approx stdBuiltins,
             derivativeFn stdBuiltins,
-            Unit.uconvert
+            Unit.uconvert, Unit.ucanon
            ]
 
 applyToStd :: MonadReader ModeInfo m => String -> [Expr Prim] -> m (Expr Prim)
