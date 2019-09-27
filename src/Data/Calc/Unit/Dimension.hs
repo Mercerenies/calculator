@@ -2,7 +2,7 @@
 
 module Data.Calc.Unit.Dimension(SimpleDim(..), Dimension(),
                                 singleton, unitless, mul, recip, div,
-                                angle, length, time,
+                                angle, length, time, temperature,
                                 toList) where
 
 import Data.Semigroup
@@ -10,7 +10,7 @@ import Data.Map(Map)
 import qualified Data.Map as Map
 import Prelude hiding (recip, length, div)
 
-data SimpleDim = Angle | Length | Time
+data SimpleDim = Angle | Length | Time | Temperature
                  deriving (Show, Read, Eq, Ord, Enum)
 
 newtype Dimension = Dimension (Map SimpleDim Int)
@@ -41,10 +41,11 @@ recip (Dimension a) = normalize $ Dimension (fmap negate a)
 div :: Dimension -> Dimension -> Dimension
 a `div` b = a `mul` recip b
 
-angle, length, time :: Dimension
+angle, length, time, temperature :: Dimension
 angle = singleton Angle
 length = singleton Length
 time = singleton Time
+temperature = singleton Temperature
 
 toList :: Dimension -> [(SimpleDim, Int)]
 toList (Dimension d) = Map.toList d

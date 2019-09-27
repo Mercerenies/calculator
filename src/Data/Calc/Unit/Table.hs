@@ -1,12 +1,13 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table,
+module Data.Calc.Unit.Table(expandSIPrefixes, radians, degrees, table, tempTable,
                             simpleCanonical, canonical) where
 
 import Data.Calc.Unit.Type
 import qualified Data.Calc.Unit.Dimension as Dim
 import Data.Calc.Expr
 import Data.Calc.Number
+import qualified Data.Calc.Unit.Temperature as Temp
 
 import Prelude hiding (id, (.))
 import Control.Category
@@ -89,6 +90,9 @@ years = ("yr", unitByFactor Dim.time . recipOf $ Constant (PrimNum 31557600))
 
 liters = ("L", unitByFactor ((3 :: Int) `stimes` Dim.length) $ Constant (PrimNum . NRatio $ 1000 % 1))
 
+tempTable :: Map String Temp.TemperatureUnit
+tempTable = Map.fromList [Temp.kelvins, Temp.celsius, Temp.fahrenheit]
+
 table :: Map String (Unit (Expr Prim) (Expr Prim))
 table = Map.fromList $ concat [
 
@@ -103,6 +107,9 @@ table = Map.fromList $ concat [
          expandSIPrefixes seconds,
          [seconds', minutes, hours, days, weeks, years],
 
+         -- Temperature units
+         map (second Temp.tempToRelativeUnit) (Map.toList tempTable),
+
          -- Volume units
          expandSIPrefixes liters
 
@@ -113,6 +120,8 @@ simpleCanonical d = (Constant . PrimVar *** id) $ case d of
                                                     Dim.Angle -> radians
                                                     Dim.Length -> meters
                                                     Dim.Time -> seconds
+                                                    Dim.Temperature -> kelvins'
+    where kelvins' = second Temp.tempToRelativeUnit Temp.kelvins
 
 canonical :: Dim.Dimension -> (Expr Prim, Unit (Expr Prim) (Expr Prim))
 canonical = foldl go base . map extract . Dim.toList

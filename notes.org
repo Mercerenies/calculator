@@ -56,7 +56,7 @@
    - [X] Full higher dimensional units
    - [ ] Be "smart": e.g. if I ask to convert ~m / s^2~ to ~hr~, give
      me ~m / hr^2~.
-   - [ ] Temperature stuff
+   - [X] Temperature stuff
    - [X] Move the conversion function to a file ~Data.Calc.Function.Units~
    - [X] Unit simplification
 ** Sept 25, 2019
