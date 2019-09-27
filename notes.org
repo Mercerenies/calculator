@@ -61,4 +61,13 @@
    - [X] Unit simplification
 ** Sept 25, 2019
  + [ ] Juxtaposition should count as multiplication if it is numbers or variables
- + [ ] Vectors
+ + [-] Vectors
+   - [X] Lists of elements
+   - [X] Parsing and printing
+   - [ ] The standard operations on vectors (mainly, + and -)
+   - [ ] Absolute value which works on numbers and vectors
+   - [ ] Dot product and cross product
+   - [ ] Vector derivatives...?
+   - [ ] Matrices
+   - [ ] Matrix multiplication
+   - [ ] Don't allow multiplication to commute if we're in the wrong mode for it

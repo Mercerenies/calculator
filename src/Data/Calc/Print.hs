@@ -17,21 +17,23 @@ lispLikeShow e = lispLikeShows e ""
 
 formulaShowsPrec :: Show a => Int -> Expr a -> ShowS
 formulaShowsPrec _ (Constant x) = shows x
-formulaShowsPrec n (Compound h ts) =
+formulaShowsPrec n x
+    | Compound "vector" ts <- x = ("[" ++) . showsArglist ts . ("]" ++)
+    | Compound h ts <- x =
                  case getStdOp h of
                    Nothing -> showsAsFunction h ts
-                   Just (Op name prec _ fix) -> showParen (n >= prec) $ internal fix name ts prec
+                   Just (Op name prec _ fix) -> showParen (n >= prec) $ internal fix h name ts prec
     where showsAsFunction h' ts' = (h' ++) . ("(" ++) . showsArglist ts' . (")" ++)
           showsArglist xs =
               foldr (.) id . intersperse (", " ++) . map (formulaShowsPrec 0) $ xs
-          internal Infix name args prec =
+          internal Infix _ name args prec =
               foldr (.) id . intersperse (name ++) .
                     map (formulaShowsPrec prec) $ args
-          internal Prefix name [a] prec =
+          internal Prefix _ name [a] prec =
               (name ++) . formulaShowsPrec prec a
-          internal Postfix name [a] prec =
+          internal Postfix _ name [a] prec =
               formulaShowsPrec prec a . (name ++)
-          internal _ _ args _ = showsAsFunction h args
+          internal _ h _ args _ = showsAsFunction h args
 
 formulaShows :: Show a => Expr a -> ShowS
 formulaShows = formulaShowsPrec 0

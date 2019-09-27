@@ -61,9 +61,19 @@ fnCall = do
   _ <- char ')'
   return $ Compound name args
 
+vector :: Parser (Expr Prim)
+vector = do
+  _ <- char '['
+  spaces
+  args <- arglist
+  spaces
+  _ <- char ']'
+  return $ Compound "vector" args
+
 atom :: Parser (Expr Prim)
 atom = ((try $ Constant . PrimNum <$> complexNumber) <?> "complex number") <|>
        (char '(' *> spaces *> expr <* spaces <* char ')') <|>
+       (vector <?> "vector") <|>
        (Constant . PrimNum <$> rat <?> "rational number") <|>
        (Constant . PrimNum <$> double <?> "real number") <|>
        (fnCall <?> "function") <|>
