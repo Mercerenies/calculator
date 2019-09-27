@@ -61,3 +61,4 @@
    - [X] Unit simplification
 ** Sept 25, 2019
  + [ ] Juxtaposition should count as multiplication if it is numbers or variables
+ + [ ] Vectors
