@@ -6,6 +6,7 @@ import Data.Calc.Function.Type
 import Data.Calc.Expr
 import Data.Calc.Number
 import Data.Calc.Mode
+import Data.Calc.Coerce
 
 import Data.Ratio
 import Control.Monad.Reader
@@ -39,6 +40,9 @@ fsqrt = function "sqrt" f `withDeriv` inOneVar (\x -> pure $ Compound "/" [
                       , d' <- fromInteger d :: Double
                       , isPerfectSquare n && isPerfectSquare d ->
                           return . NRatio $ round (sqrt n') % round (sqrt d')
+                  a | Just n <- coerceToInt a
+                    , n' <- fromInteger n :: Double
+                    , isPerfectSquare n -> return . NRatio $ round (sqrt n') % 1
                   a -> hoist alwaysInexact . return $ sqrt a
             return . Constant . PrimNum $ result
           isPerfectSquare n =

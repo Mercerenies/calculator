@@ -26,7 +26,7 @@ formulaShowsPrec n x
     where showsAsFunction h' ts' = (h' ++) . ("(" ++) . showsArglist ts' . (")" ++)
           showsArglist xs =
               foldr (.) id . intersperse (", " ++) . map (formulaShowsPrec 0) $ xs
-          internal Infix _ name args prec =
+          internal Infix _ name args prec | length args >= 2 =
               foldr (.) id . intersperse (name ++) .
                     map (formulaShowsPrec prec) $ args
           internal Prefix _ name [a] prec =

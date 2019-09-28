@@ -67,7 +67,7 @@
    - [X] Parsing and printing
    - [X] The standard operations on vectors (mainly, + and -)
    - [X] Scalar multiplication
-   - [ ] Absolute value which works on numbers and vectors
+   - [X] Absolute value which works on numbers and vectors
    - [ ] Dot product and cross product
    - [ ] Vector derivatives...?
    - [X] Matrices
@@ -76,3 +76,6 @@
    - [X] Identify the "type" (read: shape) of various entities
    - [ ] Identify the shape of compound entities like sums and function calls
  + [ ] Recognize known even and odd functions and simplify negatives that appear inside them
+ + [ ] Make ~alwaysInexact~ smart enough to realize that when the
+   argument is already inexact, it won't hurt to go ahead and carry
+   out the computation.

@@ -12,6 +12,7 @@ import qualified Data.Calc.Function.Trigonometry as Trig
 import qualified Data.Calc.Function.Transcendental as Trans
 import qualified Data.Calc.Function.Combinatorial as Comb
 import qualified Data.Calc.Function.Unit as Unit
+import qualified Data.Calc.Function.Arithmetic as Arith
 import Data.Calc.Calculus.Derivative
 
 import Data.Map(Map)
@@ -35,6 +36,7 @@ stdBuiltins = compileFns [
             functionSynonym "log" "ln",
             Trans.flog, Trans.fexp, Trans.fsqrt,
             Comb.ffact, Comb.fdfact, Comb.fncr, Comb.fnpr, Comb.fgcd, Comb.flcm,
+            Arith.fabs,
             approx stdBuiltins,
             derivativeFn stdBuiltins,
             Unit.uconvert, Unit.utconvert, Unit.ucanon
