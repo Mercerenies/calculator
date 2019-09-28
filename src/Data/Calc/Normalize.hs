@@ -20,6 +20,7 @@ import Data.Calc.Number
 import Data.Calc.Constants
 import Data.Calc.Algebra.Factoring
 import qualified Data.Calc.Algebra.Trigonometry as Trig
+import qualified Data.Calc.Normalize.Vector as Vec
 
 import Prelude hiding ((.), id)
 import Data.List(sort, partition)
@@ -262,4 +263,4 @@ innerSimplePass :: MonadReader ModeInfo m => PassT m Prim Prim
 innerSimplePass = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 fullPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd . Vec.vectorPass . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives

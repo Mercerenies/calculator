@@ -61,13 +61,18 @@
    - [X] Unit simplification
 ** Sept 25, 2019
  + [ ] Juxtaposition should count as multiplication if it is numbers or variables
+** Sept 27, 2019
  + [-] Vectors
    - [X] Lists of elements
    - [X] Parsing and printing
-   - [ ] The standard operations on vectors (mainly, + and -)
+   - [X] The standard operations on vectors (mainly, + and -)
+   - [X] Scalar multiplication
    - [ ] Absolute value which works on numbers and vectors
    - [ ] Dot product and cross product
    - [ ] Vector derivatives...?
-   - [ ] Matrices
+   - [X] Matrices
    - [ ] Matrix multiplication
    - [ ] Don't allow multiplication to commute if we're in the wrong mode for it
+   - [X] Identify the "type" (read: shape) of various entities
+   - [ ] Identify the shape of compound entities like sums and function calls
+ + [ ] Recognize known even and odd functions and simplify negatives that appear inside them

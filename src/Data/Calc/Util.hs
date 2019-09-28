@@ -4,7 +4,7 @@ module Data.Calc.Util(untilFixed, untilFixedM,
                       maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
                       stripString,
                       duplicateApply, duplicateApplyM, possibly,
-                      maybeToFail) where
+                      maybeToFail, the) where
 
 import Prelude hiding (fail)
 import Data.Map(Map)
@@ -68,3 +68,7 @@ possibly p f = proc x -> do
 maybeToFail :: MonadFail m => Maybe a -> m a
 maybeToFail Nothing = fail "Nothing"
 maybeToFail (Just x) = pure x
+
+the :: Eq a => [a] -> Maybe a
+the [] = Nothing
+the (x:xs) = x <$ guard (all (== x) xs)
