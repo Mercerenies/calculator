@@ -68,13 +68,15 @@
    - [X] The standard operations on vectors (mainly, + and -)
    - [X] Scalar multiplication
    - [X] Absolute value which works on numbers and vectors
-   - [ ] Dot product and cross product
+   - [X] Dot product
+   - [ ] Cross product
    - [ ] Vector derivatives...?
    - [X] Matrices
-   - [ ] Matrix multiplication
+   - [X] Matrix multiplication
    - [X] Don't allow multiplication to commute if we're in the wrong mode for it
    - [X] Identify the "type" (read: shape) of various entities
    - [X] Identify the shape of compound entities like sums and function calls
+   - [ ] "Polymorphic" zero and identity values like Emacs Calc has
  + [ ] Recognize known even and odd functions and simplify negatives that appear inside them
  + [ ] Make ~alwaysInexact~ smart enough to realize that when the
    argument is already inexact, it won't hurt to go ahead and carry
