@@ -11,20 +11,31 @@ import Prelude hiding (fail, (.), id)
 import Control.Monad.Reader
 import Control.Applicative
 
-vectorAddition :: Monad m => PassT m Prim Prim
-vectorAddition = pass go
-    where go (Compound "+" xs) = Compound "+" $ attempt xs
-          go x = x
-          attempt (x:y:zs)
+vectorAddition :: MonadReader ModeInfo m => PassT m Prim Prim
+vectorAddition = PassT go
+    where go (Compound "+" xs) = Compound "+" <$> (ask >>= \m -> pure $ attempt m xs)
+          go x = pure x
+          attempt m (x:y:zs)
+              -- Vector-vector addition
               | Compound "vector" xs <- x
               , Compound "vector" ys <- y
               , Just xd <- vectorDims x
               , Just yd <- vectorDims y
               , xd == yd
               , let zipped = zipWith (\a b -> Compound "+" [a, b]) xs ys
-              = attempt $ Compound "vector" zipped : zs
-          attempt (x:xs) = x : attempt xs
-          attempt [] = []
+              = attempt m $ Compound "vector" zipped : zs
+              -- Vector-scalar addition
+              | Compound "vector" xs <- x
+              , makeAssumptions (shapeOf y) m == Scalar
+              , let zipped = map (\a -> Compound "+" [a, y]) xs
+              = attempt m $ Compound "vector" zipped : zs
+              -- Scalar-vector addition
+              | Compound "vector" ys <- y
+              , makeAssumptions (shapeOf x) m == Scalar
+              , let zipped = map (\b -> Compound "+" [x, b]) ys
+              = attempt m $ Compound "vector" zipped : zs
+          attempt m (x:xs) = x : attempt m xs
+          attempt _ [] = []
 
 scalarMultiplication :: MonadReader ModeInfo m => PassT m Prim Prim
 scalarMultiplication = PassT go
