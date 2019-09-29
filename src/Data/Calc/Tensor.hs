@@ -28,7 +28,7 @@ prod x y
     , let sum' = Compound "+"
     , let a .* b = Compound "*" [a, b]
     , let f ns = sum' [query (take (length xd - 1) ns ++ [i]) x .*
-                       query ([i] ++ drop (length xd - 1) ns) x
+                       query ([i] ++ drop (length xd - 1) ns) y
                            | i <- [0 .. (xd !! mergedim) - 1]]
     = Just $ build f newdims
     | otherwise
