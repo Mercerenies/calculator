@@ -18,6 +18,7 @@ import Data.Calc.Function.Type
 import Data.Calc.Mode
 import Data.Calc.Number
 import Data.Calc.Constants
+import Data.Calc.Shape
 import Data.Calc.Algebra.Factoring
 import qualified Data.Calc.Algebra.Trigonometry as Trig
 import qualified Data.Calc.Normalize.Vector as Vec
@@ -248,8 +249,17 @@ sortTermsOf ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' xs) | str == str' = Compound str' (sort xs)
           go _ x = x
 
-sortTermsOfStd :: (Ord a, Monad m) => PassT m a a
-sortTermsOfStd = sortTermsOf ["+", "*"]
+sortTermsOfStd :: MonadReader ModeInfo m => PassT m Prim Prim
+sortTermsOfStd = sortTermsOf ["+"] . conditionalPass check (sortTermsOf ["*"])
+    where check (Compound "*" xs) =
+              isSafe <$> mapM (makeAssumptions . shapeOf) xs
+          check _ = pure False
+          -- We can safely commute everything if there is at most one
+          -- operand for which the commutativity fails. If there are
+          -- two or more, leave it be. We allow there to be one so
+          -- that e.g., scalars will commute around a single matrix to
+          -- create a nicer standard form.
+          isSafe = (< 2) . length . filter (not . multiplicationCommutes)
 
 promoteRatios :: Monad m => PassT m Prim Prim
 promoteRatios = pass go

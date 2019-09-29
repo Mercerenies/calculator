@@ -32,3 +32,12 @@ makeAssumptions Variable = go <$> asks vectorMode
           go AssumeMatrix  = Matrix
           go AssumeScalar  = Scalar
 makeAssumptions x = pure x
+
+multiplicationCommutes :: Shape -> Bool
+multiplicationCommutes shape =
+    case shape of
+      Scalar -> True
+      Vector -> False -- Can't commute with matrices but can commute with other vectors, so play safe.
+      Matrix -> False
+      Variable -> True -- If it still shows as a variable after assumptions, say we're okay.
+      Unknown -> False
