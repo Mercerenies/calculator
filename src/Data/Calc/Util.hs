@@ -4,7 +4,8 @@ module Data.Calc.Util(untilFixed, untilFixedM,
                       maybeToMonoid, mappendMap, mapAccum, accumSomeValues,
                       stripString,
                       duplicateApply, duplicateApplyM, possibly,
-                      maybeToFail, the) where
+                      maybeToFail, the,
+                      pairwiseAttempt, pairwiseAttemptM) where
 
 import Prelude hiding (fail)
 import Data.Map(Map)
@@ -72,3 +73,14 @@ maybeToFail (Just x) = pure x
 the :: Eq a => [a] -> Maybe a
 the [] = Nothing
 the (x:xs) = x <$ guard (all (== x) xs)
+
+pairwiseAttempt :: (a -> a -> Maybe a) -> [a] -> [a]
+pairwiseAttempt f = runIdentity . pairwiseAttemptM (\x y -> Identity (f x y))
+
+pairwiseAttemptM :: Monad m => (a -> a -> m (Maybe a)) -> [a] -> m [a]
+pairwiseAttemptM f = go
+    where go [] = pure []
+          go [x] = pure [x]
+          go (x:y:zs) = f x y >>= \case
+                          Nothing -> (x :) <$> go (y:zs)
+                          Just xy -> go (xy : zs)
