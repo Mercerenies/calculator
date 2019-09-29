@@ -3,6 +3,7 @@
 module Data.Calc.Function.Transcendental where
 
 import Data.Calc.Function.Type
+import Data.Calc.Function.Shape
 import Data.Calc.Expr
 import Data.Calc.Number
 import Data.Calc.Mode
@@ -14,6 +15,7 @@ import Control.Monad.Morph
 
 flog :: MonadReader ModeInfo m => Function m
 flog = function "ln" f `withDeriv` inOneVar (\x -> pure $ Compound "/" [Constant (PrimNum 1), x])
+                       `withShape` always Scalar
     where f = hoist alwaysInexact $ do
             [Constant (PrimNum x)] <- ask
             return . Constant . PrimNum $ log x
@@ -29,6 +31,7 @@ fsqrt = function "sqrt" f `withDeriv` inOneVar (\x -> pure $ Compound "/" [
                                                        Constant (PrimNum (NRatio $ 1 % 2)),
                                                        Compound "sqrt" [x]
                                                       ])
+                          `withShape` always Scalar
     where f = do
             [Constant (PrimNum x)] <- ask
             result <-

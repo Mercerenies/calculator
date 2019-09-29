@@ -3,6 +3,7 @@
 module Data.Calc.Function.Approximate(promoteRatios, approximately, approx) where
 
 import Data.Calc.Function.Type
+import Data.Calc.Function.Shape
 import Data.Calc.Normalize
 import Data.Calc.Pass
 import Data.Calc.Mode
@@ -25,4 +26,4 @@ approximately fns = do
   lift . lift $ local (\mode -> mode { exactnessMode = Floating }) $ runPassTDM (fullPass fns) expr
 
 approx :: MonadReader ModeInfo m => Map String (Function m) -> Function m
-approx fns = function "N" (approximately fns)
+approx fns = function "N" (approximately fns) `withShape` matchFirstArg

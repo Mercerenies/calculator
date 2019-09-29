@@ -2,6 +2,7 @@
 module Data.Calc.Function.Combinatorial(ffact, fdfact, fncr, fnpr, fgcd, flcm) where
 
 import Data.Calc.Function.Type
+import Data.Calc.Function.Shape
 import Data.Calc.Expr
 import Data.Calc.Number
 import Data.Calc.Coerce
@@ -13,7 +14,7 @@ import Control.Monad.Reader
 -- of these others may be extendable to at least reals somehow
 
 ffact :: Monad m => Function m
-ffact = function "fact" f
+ffact = function "fact" f `withShape` always Scalar
     where f = do
             [Constant (PrimNum x)] <- ask
             x' <- coerceToInt x
@@ -22,7 +23,7 @@ ffact = function "fact" f
           fact x = product [1..x]
 
 fdfact :: Monad m => Function m
-fdfact = function "dfact" f
+fdfact = function "dfact" f `withShape` always Scalar
     where f = do
             [Constant (PrimNum x)] <- ask
             x' <- coerceToInt x
@@ -31,7 +32,7 @@ fdfact = function "dfact" f
           dfact x = fromInteger . product $ takeWhile (> 0) [x, x - 2 ..]
 
 fncr :: Monad m => Function m
-fncr = function "nCr" f
+fncr = function "nCr" f `withShape` always Scalar
     where f = do
             [Constant (PrimNum x), Constant (PrimNum y)] <- ask
             x' <- coerceToInt x
@@ -41,7 +42,7 @@ fncr = function "nCr" f
           ncr x y = product [x-y+1..x] % product [1..y]
 
 fnpr :: Monad m => Function m
-fnpr = function "nPr" f
+fnpr = function "nPr" f `withShape` always Scalar
     where f = do
             [Constant (PrimNum x), Constant (PrimNum y)] <- ask
             x' <- coerceToInt x
@@ -51,7 +52,7 @@ fnpr = function "nPr" f
           npr x y = product [x-y+1..x] % 1
 
 fgcd :: Monad m => Function m
-fgcd = function "gcd" f
+fgcd = function "gcd" f `withShape` always Scalar
     where f = do
             [Constant (PrimNum x), Constant (PrimNum y)] <- ask
             x' <- coerceToInt x
@@ -59,7 +60,7 @@ fgcd = function "gcd" f
             return . Constant . PrimNum . NRatio $ gcd x' y' % 1
 
 flcm :: Monad m => Function m
-flcm = function "lcm" f
+flcm = function "lcm" f `withShape` always Scalar
     where f = do
             [Constant (PrimNum x), Constant (PrimNum y)] <- ask
             x' <- coerceToInt x

@@ -3,6 +3,7 @@
 module Data.Calc.Function.Arithmetic where
 
 import Data.Calc.Function.Type
+import Data.Calc.Function.Shape
 import Data.Calc.Expr
 import Data.Calc.Number
 import Data.Calc.Mode
@@ -12,7 +13,7 @@ import Control.Monad.Reader
 
 -- TODO Should we have abs on vectors check to make sure they're one-dimensional first?
 fabs :: MonadReader ModeInfo m => Function m
-fabs = function "abs" f
+fabs = function "abs" f `withShape` always Scalar
     where f = do
             [x] <- ask
             case x of

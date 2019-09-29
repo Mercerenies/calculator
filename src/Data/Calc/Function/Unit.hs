@@ -7,6 +7,7 @@ import Data.Calc.Unit.Type
 import Data.Calc.Unit.Temperature
 import Data.Calc.Unit.Parse(parseUnits)
 import Data.Calc.Function.Type
+import Data.Calc.Function.Shape
 import Data.Calc.Util
 import Data.Calc.Expr
 import Data.Calc.Pass
@@ -26,6 +27,9 @@ parseArgs [expr, old, new] = pure (ArgsExplicit, expr, old, new)
 parseArgs [old, new] = pure (ArgsImplicit, Constant (PrimNum 1), old, new)
 parseArgs _ = fail "invalid args to uconvert"
 
+-- TODO Should the unit functions do... something when given vector
+-- arguments?
+
 -- To clarify, uconvert accepts two forms.
 --
 -- Explicit arguments:
@@ -44,7 +48,7 @@ parseArgs _ = fail "invalid args to uconvert"
 -- the number).
 
 uconvert :: Monad m => Function m
-uconvert = function "uconvert" go
+uconvert = function "uconvert" go `withShape` always Scalar
     where go = do
             (form, expr, old, new) <- ask >>= parseArgs
             old' <- parseUnits table old
@@ -60,7 +64,7 @@ uconvert = function "uconvert" go
 -- temperature units. Treats temperatures as absolute rather than
 -- relative.
 utconvert :: Monad m => Function m
-utconvert = function "utconvert" go
+utconvert = function "utconvert" go `withShape` always Scalar
     where go = do
             (form, expr, old, Constant (PrimVar new)) <- ask >>= parseArgs
             -- Right now, we're accepting very limited argument forms.
@@ -86,7 +90,7 @@ utconvert = function "utconvert" go
 
 -- ucanon(expr)
 ucanon :: MonadReader ModeInfo m => Function m
-ucanon = function "ucanon" go
+ucanon = function "ucanon" go `withShape` always Scalar
     where go = do
             [expr] <- ask
             lift . lift $ runPassOnceBUM canonicalizePass expr
