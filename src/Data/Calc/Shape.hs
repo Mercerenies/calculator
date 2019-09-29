@@ -26,7 +26,7 @@ shapeSum Vector Matrix = Unknown
 shapeSum Matrix Matrix = Matrix
 shapeSum Matrix Vector = Unknown
 
-vectorDims :: Expr Prim -> Maybe [Int]
+vectorDims :: Expr a -> Maybe [Int]
 vectorDims (Compound "vector" xs) = (length xs :) <$> (mapM vectorDims xs >>= the)
 vectorDims _ = Just []
 

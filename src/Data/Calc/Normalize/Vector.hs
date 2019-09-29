@@ -14,7 +14,6 @@ import Prelude hiding (fail, (.), id)
 import Control.Monad.Reader
 import Control.Applicative
 import Data.Map(Map)
-import qualified Data.List.NonEmpty as NonEmpty
 
 vectorAddition :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
 vectorAddition fns = PassT go
@@ -65,20 +64,7 @@ matrixMultiplication = pass go
           attempt [] = []
           attempt [x] = [x]
           attempt (x:y:zs)
-              | Just xd  <- vectorDims x
-              , Just yd  <- vectorDims y
-              , Just xd' <- NonEmpty.nonEmpty xd
-              , Just yd' <- NonEmpty.nonEmpty yd
-              , NonEmpty.last xd' == NonEmpty.head yd'
-              , let mergedim = length xd - 1
-              , let newdims = NonEmpty.init xd' ++ NonEmpty.tail yd'
-              , let sum' = Compound "+"
-              , let a .* b = Compound "*" [a, b]
-              , let f ns =
-                        sum' [Tensor.query (take (length xd - 1) ns ++ [i]) x .*
-                              Tensor.query ([i] ++ drop (length xd - 1) ns) y
-                                  | i <- [0 .. (xd !! mergedim) - 1]]
-              = attempt (Tensor.build f newdims : zs)
+              | Just xy <- Tensor.prod x y = attempt (xy : zs)
               | otherwise = x : attempt (y:zs)
 
 vectorPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
