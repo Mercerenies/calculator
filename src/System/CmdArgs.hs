@@ -16,7 +16,13 @@ options = [
  Option ['f'] ["fractional"] (NoArg $ \m -> m { exactnessMode = Fractional })
             "Fractional exactness (default)",
  Option ['s'] ["symbolic"] (NoArg $ \m -> m { exactnessMode = Symbolic })
-            "Symbolic exactness (default)"
+            "Symbolic exactness (default)",
+ Option ['M'] ["nomatrix"] (NoArg $ \m -> m { vectorMode = AssumeNothing })
+            "Assume nothing of variables (default)",
+ Option ['m'] ["matrix"] (NoArg $ \m -> m { vectorMode = AssumeMatrix })
+            "Assume variables are matrices",
+ Option ['l'] ["scalar"] (NoArg $ \m -> m { vectorMode = AssumeScalar })
+            "Assume variables are scalar"
  ]
 
 parseArgv :: [String] -> ModeInfo -> IO (ModeInfo, [String])
