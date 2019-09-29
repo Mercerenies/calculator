@@ -249,10 +249,10 @@ sortTermsOf ss = foldr (.) id $ map (pass . go) ss
     where go str (Compound str' xs) | str == str' = Compound str' (sort xs)
           go _ x = x
 
-sortTermsOfStd :: MonadReader ModeInfo m => PassT m Prim Prim
-sortTermsOfStd = sortTermsOf ["+"] . conditionalPass check (sortTermsOf ["*"])
+sortTermsOfStd :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+sortTermsOfStd fns = sortTermsOf ["+"] . conditionalPass check (sortTermsOf ["*"])
     where check (Compound "*" xs) =
-              isSafe <$> mapM (makeAssumptions . shapeOf) xs
+              isSafe <$> mapM (makeAssumptions . shapeOf fns) xs
           check _ = pure False
           -- We can safely commute everything if there is at most one
           -- operand for which the commutativity fails. If there are
@@ -273,4 +273,4 @@ innerSimplePass :: MonadReader ModeInfo m => PassT m Prim Prim
 innerSimplePass = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 fullPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd . Vec.vectorPass . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd fns . Vec.vectorPass fns . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives

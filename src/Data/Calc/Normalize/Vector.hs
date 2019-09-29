@@ -6,13 +6,15 @@ import Data.Calc.Expr
 import Data.Calc.Pass
 import Data.Calc.Mode
 import Data.Calc.Shape
+import Data.Calc.Function.Type
 
 import Prelude hiding (fail, (.), id)
 import Control.Monad.Reader
 import Control.Applicative
+import Data.Map(Map)
 
-vectorAddition :: MonadReader ModeInfo m => PassT m Prim Prim
-vectorAddition = PassT go
+vectorAddition :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+vectorAddition fns = PassT go
     where go (Compound "+" xs) = Compound "+" <$> (ask >>= \m -> pure $ attempt m xs)
           go x = pure x
           attempt m (x:y:zs)
@@ -26,19 +28,19 @@ vectorAddition = PassT go
               = attempt m $ Compound "vector" zipped : zs
               -- Vector-scalar addition
               | Compound "vector" xs <- x
-              , makeAssumptions (shapeOf y) m == Scalar
+              , makeAssumptions (shapeOf fns y) m == Scalar
               , let zipped = map (\a -> Compound "+" [a, y]) xs
               = attempt m $ Compound "vector" zipped : zs
               -- Scalar-vector addition
               | Compound "vector" ys <- y
-              , makeAssumptions (shapeOf x) m == Scalar
+              , makeAssumptions (shapeOf fns x) m == Scalar
               , let zipped = map (\b -> Compound "+" [x, b]) ys
               = attempt m $ Compound "vector" zipped : zs
           attempt m (x:xs) = x : attempt m xs
           attempt _ [] = []
 
-scalarMultiplication :: MonadReader ModeInfo m => PassT m Prim Prim
-scalarMultiplication = PassT go
+scalarMultiplication :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+scalarMultiplication fns = PassT go
     where go (Compound "*" xs) = Compound "*" <$> attempt xs
           go x = pure x
           attempt [] = pure []
@@ -48,10 +50,10 @@ scalarMultiplication = PassT go
                 Nothing -> (x :) <$> attempt (y : zs)
                 Just r -> attempt (r : zs)
           tryMultiply s (Compound "vector" xs) =
-              makeAssumptions (shapeOf s) >>= \case
+              makeAssumptions (shapeOf fns s) >>= \case
                 Scalar -> pure . Just . Compound "vector" $ map (\x -> Compound "*" [s, x]) xs
                 _ -> pure Nothing
           tryMultiply _ _ = pure Nothing
 
-vectorPass :: MonadReader ModeInfo m => PassT m Prim Prim
-vectorPass = scalarMultiplication . vectorAddition
+vectorPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+vectorPass fns = scalarMultiplication fns . vectorAddition fns

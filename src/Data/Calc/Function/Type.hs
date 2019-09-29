@@ -10,9 +10,12 @@ module Data.Calc.Function.Type(FunctionType, Function(..), applyTo,
 import Data.Calc.Expr
 import Data.Calc.Mode
 import Data.Calc.Number
+import Data.Calc.Shape.Type
 
-import Control.Monad.Reader
+import Prelude hiding (fail)
+import Control.Monad.Reader hiding (fail)
 import Control.Monad.Trans.Maybe
+import Control.Monad.Fail
 import Data.Function
 import Data.Map(Map)
 import qualified Data.Map as Map
@@ -24,7 +27,8 @@ type FunctionType m = FunctionMonad m (Expr Prim)
 data Function m = Function {
       fnName :: String,
       fnImpl :: FunctionType m,
-      fnDerivative :: Int -> FunctionType m
+      fnDerivative :: Int -> FunctionType m,
+      fnShape :: (Expr Prim -> Shape) -> [Expr Prim] -> Shape
     }
 
 applyTo :: MonadReader ModeInfo m => Map String (Function m) -> String -> [Expr Prim] -> m (Expr Prim)
@@ -38,7 +42,7 @@ functionSynonym :: Monad m => String -> String -> Function m
 functionSynonym oldname newname = function oldname (Compound newname <$> ask)
 
 function :: Monad m => String -> FunctionType m -> Function m
-function name impl = Function name impl (\_ -> fail "no known derivative")
+function name impl = Function name impl (\_ -> fail "no known derivative") (\_ _ -> Unknown)
 
 -- Intended to be used infix
 withDeriv :: Function m -> (Int -> FunctionType m) -> Function m
