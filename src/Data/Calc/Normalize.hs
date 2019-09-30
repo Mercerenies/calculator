@@ -194,11 +194,12 @@ foldConstantsRational = pass eval
 -- issues. This needs the ModeInfo reader state so it knows to pass
 -- through on expressions of rationals that would yield non-rational
 -- results.
-foldConstantsPow :: MonadReader ModeInfo m => PassT m Prim Prim
-foldConstantsPow = PassT eval
-    where eval (Compound "^" [a, b])
+foldConstantsPow :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+foldConstantsPow fns = PassT (\x -> ask >>= \m -> eval m x)
+    where eval m (Compound "^" [a, b])
               | Just 1 <- coerceToNum a = pure $ Constant (PrimNum 1)
-              | Just 0 <- coerceToNum b = pure $ Constant (PrimNum 1)
+              | Just 0 <- coerceToNum b, makeAssumptions (shapeOf fns a) m == Scalar =
+                          pure $ Constant (PrimNum 1)
               | Just 1 <- coerceToNum b = pure a
               | (Just a', Just b') <- (coerceToNum a, coerceToNum b) = do
                   exactness <- asks exactnessMode
@@ -207,7 +208,7 @@ foldConstantsPow = PassT eval
                      not (isRational result) && exactness >= Symbolic
                   then return $ Compound "^" [a, b]
                   else return . Constant $ PrimNum (a' ** b')
-          eval x = pure x
+          eval _ x = pure x
 
 
 -- TODO Generalize this to be typeclassed like above.
@@ -269,8 +270,8 @@ promoteRatios = pass go
 promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
 promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
-innerSimplePass :: MonadReader ModeInfo m => PassT m Prim Prim
-innerSimplePass = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+innerSimplePass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+innerSimplePass fns = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow fns . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
 
 fullPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-fullPass fns = Trig.equivSolvePass innerSimplePass . Trig.simpleSolvePass innerSimplePass . promoteRatiosMaybe . sortTermsOfStd fns . Vec.vectorPass fns . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+fullPass fns = Trig.equivSolvePass (innerSimplePass fns) . Trig.simpleSolvePass (innerSimplePass fns) . promoteRatiosMaybe . sortTermsOfStd fns . Vec.vectorPass fns . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow fns . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives

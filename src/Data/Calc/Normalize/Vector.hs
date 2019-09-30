@@ -8,6 +8,7 @@ import Data.Calc.Pass
 import Data.Calc.Mode
 import Data.Calc.Shape
 import Data.Calc.Util
+import Data.Calc.Coerce
 import Data.Calc.Function.Type
 import qualified Data.Calc.Tensor as Tensor
 
@@ -60,5 +61,16 @@ matrixMultiplication = pass go
           go x = x
           attempt x y = Tensor.prod x y
 
+-- Right now, this only works on square matrices and not on any other
+-- tensors. These are the only ones we can guarantee the behavior for
+-- for abstract positive integer powers.
+matrixPower :: Monad m => PassT m Prim Prim -- TODO Negative powers, when we can
+matrixPower = pass go
+    where go (Compound "^" [x, (Constant (PrimNum n))])
+              | Just n' <- coerceToInt n
+              , Just x' <- Tensor.pow x n'
+              = x'
+          go x = x
+
 vectorPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-vectorPass fns = matrixMultiplication . scalarMultiplication fns . vectorAddition fns
+vectorPass fns = matrixPower . matrixMultiplication . scalarMultiplication fns . vectorAddition fns
