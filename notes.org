@@ -79,6 +79,8 @@
    - [ ] "Polymorphic" zero and identity values like Emacs Calc has
    - [X] Matrix powers
    - [ ] Negative matrix powers
+   - [ ] Matrix inverse
+   - [ ] Other matrix ops: determinant, trace, etc.
  + [ ] Recognize known even and odd functions and simplify negatives that appear inside them
  + [ ] Make ~alwaysInexact~ smart enough to realize that when the
    argument is already inexact, it won't hurt to go ahead and carry
