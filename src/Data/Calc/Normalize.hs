@@ -60,21 +60,23 @@ levelOperators ss = foldr (.) id $ map (pass . go) ss
 levelStdOperators :: Monad m => PassT m a a
 levelStdOperators = levelOperators ["+", "*"]
 
-simplifyRationals :: MonadReader ModeInfo m => PassT m a a
-simplifyRationals = conditionalPass check $ foldr (.) id $ map pass [rule1, rule2, rule3]
+simplifyRationals :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+simplifyRationals fns = conditionalPass check $ pass rule1 . pass rule2 . PassT rule3
     where -- (a/b)/c ==> a/(bc)
           rule1 (Compound "/" [Compound "/" [a, b], c]) = Compound "/" [a, Compound "*" [b, c]]
           rule1 x = x
-          -- a/(b/c) ==> (ac)/b
-          rule2 (Compound "/" [a, Compound "/" [b, c]]) = Compound "/" [Compound "*" [a, c], b]
+          -- a/(b/c) ==> (ca)/b
+          rule2 (Compound "/" [a, Compound "/" [b, c]]) = Compound "/" [Compound "*" [c, a], b]
           rule2 x = x
           -- a(b/c)d ==> (abd)/c
-          rule3 (Compound "*" xs)
-              | any isDivision xs =
+          rule3 x = ask >>= \mode -> rule3' mode x
+          rule3' mode (Compound "*" xs)
+              | any isDivision xs
+              , all (\x -> multiplicationCommutes $ makeAssumptions (shapeOf fns x) mode) xs =
                   let num = map extractNum xs
                       den = mapMaybe extractDenom xs
-                  in Compound "/" [Compound "*" num, Compound "*" den]
-          rule3 x = x
+                  in pure $ Compound "/" [Compound "*" num, Compound "*" den]
+          rule3' _ x = pure x
           isDivision (Compound "/" _) = True
           isDivision _ = False
           extractNum (Compound "/" [a, _]) = a
@@ -83,11 +85,15 @@ simplifyRationals = conditionalPass check $ foldr (.) id $ map pass [rule1, rule
           extractDenom _ = Nothing
           check _ = fmap (/= AssumeMatrix) $ asks vectorMode
 
-collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
-                      PassT m a a
-collectLikeFactors = pass collect
-    where collect (Compound "*" xs) = simply "*" (collectTerms match coalesce xs)
-          collect x = x
+collectLikeFactors :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+collectLikeFactors fns = PassT collect
+    where collect (Compound "*" xs) = do
+            shapes <- mapM (makeAssumptions . shapeOf fns) xs
+            if all multiplicationCommutes shapes then
+                pure $ simply "*" (collectTerms match coalesce xs)
+            else
+                pure (Compound "*" xs)
+          collect x = pure x
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
           match (Compound "^" [Constant a, Constant b]) | isVar a = Just (a, Constant b)
           match _ = Nothing
@@ -107,22 +113,26 @@ collectLikeTerms = pass collect
           coalesce a [x] | x == Constant (reprInteger 1) = Constant a
           coalesce a es = Compound "*" [simply "+" es, Constant a]
 
-collectFactorsFromDenom :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
-                           PassT m a a
-collectFactorsFromDenom = pass collect
-    where collect (Compound "/" [a, b]) =
-              let as = fromProduct a
-                  bs = fromProduct b
-                  (nums, mnum) = accumulateTerms match as
-                  (dens, mden) = accumulateTerms match bs
-                  result = Merge.merge numOnly denOnly numDen mnum mden
-                  (newnum, newden) = Map.toList result &
-                                     partition (\(_, (_, fb)) -> fb == Numerator) &
-                                     (map (\(k, (v, _)) -> (k, v)) *** map (\(k, (v, _)) -> (k, v)))
-                  finalnum = nums ++ map (uncurry coalesce) newnum
-                  finalden = dens ++ map (uncurry coalesce) newden
-              in Compound "/" [simply "*" finalnum, simply "*" finalden]
-          collect x = x
+collectFactorsFromDenom :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
+collectFactorsFromDenom fns = PassT collect
+    where collect (Compound "/" [a, b]) = do
+            let as = fromProduct a
+                bs = fromProduct b
+                (nums, mnum) = accumulateTerms match as
+                (dens, mden) = accumulateTerms match bs
+                result = Merge.merge numOnly denOnly numDen mnum mden
+                (newnum, newden) = Map.toList result &
+                                   partition (\(_, (_, fb)) -> fb == Numerator) &
+                                   (map (\(k, (v, _)) -> (k, v)) *** map (\(k, (v, _)) -> (k, v)))
+                finalnum = nums ++ map (uncurry coalesce) newnum
+                finalden = dens ++ map (uncurry coalesce) newden
+            shapea <- mapM (makeAssumptions . shapeOf fns) as
+            shapeb <- mapM (makeAssumptions . shapeOf fns) bs
+            if all multiplicationCommutes (shapea ++ shapeb) then
+                return $ Compound "/" [simply "*" finalnum, simply "*" finalden]
+            else
+                return (Compound "/" [a, b])
+          collect x = pure x
           fromProduct (Compound "*" xs) = xs
           fromProduct x = [x]
           match (Constant a) | isVar a = Just (a, Constant (reprInteger 1))
@@ -146,7 +156,6 @@ flattenNestedExponents = pass go
               Compound "^" [a, Compound "*" [b, c]]
           go x = x
 
--- TODO I'd like to generalize this to take Pass a a for appropriately typeclassed a.
 foldConstants :: Monad m => PassT m Prim Prim
 foldConstants = pass eval
     where eval (Compound "+" xs) =
@@ -199,8 +208,9 @@ foldConstantsPow :: MonadReader ModeInfo m => Map String (Function m) -> PassT m
 foldConstantsPow fns = PassT (\x -> ask >>= \m -> eval m x)
     where eval m (Compound "^" [a, b])
               | Just 1 <- coerceToNum a = pure $ Constant (PrimNum 1)
-              | Just 0 <- coerceToNum b, makeAssumptions (shapeOf fns a) m == Scalar =
-                          pure $ Constant (PrimNum 1)
+              -- Go ahead and do it if the shape is "variable", even though it's slightly unsafe.
+              | Just 0 <- coerceToNum b, makeAssumptions (shapeOf fns a) m `elem` [Scalar, Variable] =
+                          pure $ Constant (PrimNum 1) -- TODO A generic matrix form for this one if the arg is not scalar
               | Just 1 <- coerceToNum b = pure a
               | (Just a', Just b') <- (coerceToNum a, coerceToNum b) = do
                   exactness <- asks exactnessMode
@@ -272,7 +282,7 @@ promoteRatiosMaybe :: MonadReader ModeInfo m => PassT m Prim Prim
 promoteRatiosMaybe = conditionalPass (\_ -> (<= Floating) <$> asks exactnessMode) promoteRatios
 
 innerSimplePass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-innerSimplePass fns = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow fns . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+innerSimplePass fns = flattenStdNullaryOps . flattenStdSingletons . evalConstants . foldConstantsPow fns . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom fns . collectLikeFactors fns . levelStdOperators . simplifyRationals fns . normalizeNegatives
 
 fullPass :: MonadReader ModeInfo m => Map String (Function m) -> PassT m Prim Prim
-fullPass fns = Trig.equivSolvePass (innerSimplePass fns) . Trig.simpleSolvePass (innerSimplePass fns) . promoteRatiosMaybe . sortTermsOfStd fns . Vec.vectorPass fns . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow fns . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom . collectLikeFactors . levelStdOperators . simplifyRationals . normalizeNegatives
+fullPass fns = Trig.equivSolvePass (innerSimplePass fns) . Trig.simpleSolvePass (innerSimplePass fns) . promoteRatiosMaybe . sortTermsOfStd fns . Vec.vectorPass fns . flattenStdNullaryOps . flattenStdSingletons . evalFunctions fns . evalConstants . foldConstantsPow fns . foldConstantsRational . foldConstants . flattenNestedExponents . collectLikeTerms . collectFactorsFromDenom fns . collectLikeFactors fns . levelStdOperators . simplifyRationals fns . normalizeNegatives

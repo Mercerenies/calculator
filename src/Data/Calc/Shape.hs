@@ -26,6 +26,21 @@ shapeSum Vector Matrix = Unknown
 shapeSum Matrix Matrix = Matrix
 shapeSum Matrix Vector = Unknown
 
+shapeMul :: Shape -> Shape -> Shape
+shapeMul Unknown _ = Unknown
+shapeMul _ Unknown = Unknown
+shapeMul Scalar x = x
+shapeMul x Scalar = x
+shapeMul Variable x = x
+shapeMul x Variable = x
+shapeMul Vector Vector = Scalar
+shapeMul Vector Matrix = Vector
+shapeMul Matrix Matrix = Matrix
+shapeMul Matrix Vector = Vector
+-- TODO Matrix-Vector and Vector-Matrix won't actually run right now,
+-- but we could write a pass for them easily as the operations are
+-- useful and well-defined.
+
 vectorDims :: Expr a -> Maybe [Int]
 vectorDims (Compound "vector" xs) = (length xs :) <$> (mapM vectorDims xs >>= the)
 vectorDims _ = Just []
@@ -40,6 +55,11 @@ shapeOf m (Compound h ts) =
                     Just x | length x > 1 -> Matrix
                            | otherwise    -> Vector
       "+" -> foldl' shapeSum Scalar (map (shapeOf m) ts)
+      "*" -> foldl' shapeMul Scalar (map (shapeOf m) ts)
+      "/" -> foldl' shapeMul Scalar (map (shapeOf m) ts) -- Same rules as *
+      "^" -> case ts of
+               [] -> Unknown -- What...?
+               (y:_) -> shapeOf m y
       h' | Just f <- Map.lookup h' m -> fnShape f (shapeOf m) ts
       _ -> Unknown
 
