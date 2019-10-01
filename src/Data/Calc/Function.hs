@@ -13,6 +13,7 @@ import qualified Data.Calc.Function.Transcendental as Trans
 import qualified Data.Calc.Function.Combinatorial as Comb
 import qualified Data.Calc.Function.Unit as Unit
 import qualified Data.Calc.Function.Arithmetic as Arith
+import qualified Data.Calc.Function.Vector as Vec
 import Data.Calc.Calculus.Derivative
 
 import Data.Map(Map)
@@ -37,6 +38,7 @@ stdBuiltins = compileFns [
             Trans.flog, Trans.fexp, Trans.fsqrt,
             Comb.ffact, Comb.fdfact, Comb.fncr, Comb.fnpr, Comb.fgcd, Comb.flcm,
             Arith.fabs,
+            Vec.fdet,
             approx stdBuiltins,
             derivativeFn stdBuiltins,
             Unit.uconvert, Unit.utconvert, Unit.ucanon
