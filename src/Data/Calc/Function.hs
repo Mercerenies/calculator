@@ -38,7 +38,7 @@ stdBuiltins = compileFns [
             Trans.flog, Trans.fexp, Trans.fsqrt,
             Comb.ffact, Comb.fdfact, Comb.fncr, Comb.fnpr, Comb.fgcd, Comb.flcm,
             Arith.fabs,
-            Vec.fdet,
+            Vec.fdet, Vec.ftr, Vec.ftrn,
             approx stdBuiltins,
             derivativeFn stdBuiltins,
             Unit.uconvert, Unit.utconvert, Unit.ucanon
