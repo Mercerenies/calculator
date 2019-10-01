@@ -60,8 +60,8 @@ levelOperators ss = foldr (.) id $ map (pass . go) ss
 levelStdOperators :: Monad m => PassT m a a
 levelStdOperators = levelOperators ["+", "*"]
 
-simplifyRationals :: Monad m => PassT m a a
-simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
+simplifyRationals :: MonadReader ModeInfo m => PassT m a a
+simplifyRationals = conditionalPass check $ foldr (.) id $ map pass [rule1, rule2, rule3]
     where -- (a/b)/c ==> a/(bc)
           rule1 (Compound "/" [Compound "/" [a, b], c]) = Compound "/" [a, Compound "*" [b, c]]
           rule1 x = x
@@ -81,6 +81,7 @@ simplifyRationals = foldr (.) id $ map pass [rule1, rule2, rule3]
           extractNum x = x
           extractDenom (Compound "/" [_, b]) = Just b
           extractDenom _ = Nothing
+          check _ = fmap (/= AssumeMatrix) $ asks vectorMode
 
 collectLikeFactors :: forall a m. (ReprInteger a, HasVars a, HasNumbers a, Ord a, Monad m) =>
                       PassT m a a
