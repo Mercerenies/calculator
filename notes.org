@@ -93,3 +93,5 @@
    - [ ] Need to write a matrix pass of ~collectLikeFactors~
    - [ ] Need to write a matrix pass on ~collectFactorsFromDenom~
  + [X] Parser seems to choke if a line begins or ends with a space.
+ + [ ] Factoring out integer values to cancel off in a fraction (e.g.
+   ~(3 + 3 * x) / 3~)
