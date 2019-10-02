@@ -88,8 +88,8 @@
 ** Oct 1, 2019
  + [ ] Decide when we want to distribute * over +. It can simplify
    expressions sometimes.
- + [ ] Matrix-friendly passes
-   - [ ] Disable lots of passes if we detect a matrix (wrt multiplication)
+ + [-] Matrix-friendly passes
+   - [X] Disable lots of passes if we detect a matrix (wrt multiplication)
    - [ ] Need to write a matrix pass of ~collectLikeFactors~
    - [ ] Need to write a matrix pass on ~collectFactorsFromDenom~
- + [ ] Parser seems to choke if a line begins or ends with a space.
+ + [X] Parser seems to choke if a line begins or ends with a space.

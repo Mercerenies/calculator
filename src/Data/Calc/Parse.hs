@@ -106,4 +106,4 @@ expr :: Parser (Expr Prim)
 expr = Expr.buildExpressionParser operatorTable atom
 
 parseExpr :: SourceName -> String -> Either ParseError (Expr Prim)
-parseExpr = parse (expr <* eof)
+parseExpr = parse (spaces *> expr <* spaces <* eof)
